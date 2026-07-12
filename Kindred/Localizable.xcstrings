@@ -1,0 +1,487 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@  ·  %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  ·  %2$@"
+          }
+        }
+      }
+    },
+    "Book name" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "书名"
+          }
+        }
+      }
+    },
+    "Book not found" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到书籍"
+          }
+        }
+      }
+    },
+    "Books are listed newest first." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "书籍按导入时间从新到旧排列。"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "取消"
+          }
+        }
+      }
+    },
+    "Connect your iPhone and Kindle\nto the same Wi-Fi network." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请将 iPhone 和 Kindle\n连接到同一 Wi-Fi 网络。"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "删除"
+          }
+        }
+      }
+    },
+    "Download" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "下载"
+          }
+        }
+      }
+    },
+    "File is unavailable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "文件不可用"
+          }
+        }
+      }
+    },
+    "GitHub" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub"
+          }
+        }
+      }
+    },
+    "Import" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入"
+          }
+        }
+      }
+    },
+    "Import Books" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入书籍"
+          }
+        }
+      }
+    },
+    "Import books to make them available in your library and on the local server." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入书籍后，可在书库和局域网服务器中访问。"
+          }
+        }
+      }
+    },
+    "Import Failed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入失败"
+          }
+        }
+      }
+    },
+    "Invalid request" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无效请求"
+          }
+        }
+      }
+    },
+    "Kindred Library" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kindred 书库"
+          }
+        }
+      }
+    },
+    "Library" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "书库"
+          }
+        }
+      }
+    },
+    "Local Wi-Fi sharing" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "局域网 Wi-Fi 共享"
+          }
+        }
+      }
+    },
+    "No Books" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "暂无书籍"
+          }
+        }
+      }
+    },
+    "No books have been imported yet." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未导入任何书籍。"
+          }
+        }
+      }
+    },
+    "No matching books were found." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到匹配的书籍。"
+          }
+        }
+      }
+    },
+    "No Wi-Fi IPv4 address was found. Connect both devices to the same Wi-Fi network." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到 Wi-Fi IPv4 地址。请将两台设备连接到同一 Wi-Fi 网络。"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        }
+      }
+    },
+    "Only GET and HEAD are supported" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅支持 GET 和 HEAD 请求"
+          }
+        }
+      }
+    },
+    "Open this address in the Kindle browser.\nKeep Kindred open while downloading." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在 Kindle 浏览器中打开此地址。\n下载时请保持 Kindred 在前台运行。"
+          }
+        }
+      }
+    },
+    "Open this address in the Kindle browser. Keep Kindred open while downloading." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请在 Kindle 浏览器中打开此地址。下载时请保持 Kindred 在前台运行。"
+          }
+        }
+      }
+    },
+    "Rename" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重命名"
+          }
+        }
+      }
+    },
+    "Rename Book" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "重命名书籍"
+          }
+        }
+      }
+    },
+    "Search" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索"
+          }
+        }
+      }
+    },
+    "Search books" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索书籍"
+          }
+        }
+      }
+    },
+    "Select a book to download it to your Kindle." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择一本书下载到 Kindle。"
+          }
+        }
+      }
+    },
+    "Server" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务器"
+          }
+        }
+      }
+    },
+    "Server Error" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务器错误"
+          }
+        }
+      }
+    },
+    "Server running" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务器运行中"
+          }
+        }
+      }
+    },
+    "Server Running" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务器运行中"
+          }
+        }
+      }
+    },
+    "Server stopped" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务器已停止"
+          }
+        }
+      }
+    },
+    "Server Stopped" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "服务器已停止"
+          }
+        }
+      }
+    },
+    "Start Server" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启动服务器"
+          }
+        }
+      }
+    },
+    "Starting…" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在启动…"
+          }
+        }
+      }
+    },
+    "Stop Server" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "停止服务器"
+          }
+        }
+      }
+    },
+    "The file extension will be preserved." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将保留原文件扩展名。"
+          }
+        }
+      }
+    },
+    "The selected item is not a regular file." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "所选项目不是普通文件。"
+          }
+        }
+      }
+    },
+    "Unknown error" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知错误"
+          }
+        }
+      }
+    },
+    "Unsupported file type: %@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支持的文件类型：%@"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -1,0 +1,308 @@
+import SwiftUI
+import UniformTypeIdentifiers
+
+struct ContentView: View {
+    @StateObject private var library: BookLibrary
+    @StateObject private var server: HTTPBookServer
+
+    init() {
+        let library = BookLibrary()
+        _library = StateObject(wrappedValue: library)
+        _server = StateObject(wrappedValue: HTTPBookServer(library: library))
+    }
+
+    var body: some View {
+        TabView {
+            LibraryView(library: library)
+                .tabItem {
+                    Label("Library", systemImage: "books.vertical")
+                }
+
+            ServerView(server: server)
+                .tabItem {
+                    Label("Server", systemImage: "network")
+                }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+            withAnimation(.snappy) {
+                library.importPendingShares()
+            }
+        }
+    }
+}
+
+private struct LibraryView: View {
+    @ObservedObject var library: BookLibrary
+    @State private var isImporting = false
+    @State private var bookToRename: Book?
+    @State private var renameText = ""
+    @State private var searchText = ""
+
+    private var filteredBooks: [Book] {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return library.books }
+        return library.books.filter {
+            $0.title.localizedCaseInsensitiveContains(query)
+                || $0.originalFilename.localizedCaseInsensitiveContains(query)
+                || $0.format.localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if library.books.isEmpty {
+                    ContentUnavailableView {
+                        Label("No Books", systemImage: "books.vertical")
+                    } description: {
+                        Text("Import books to make them available in your library and on the local server.")
+                    } actions: {
+                        Button {
+                            isImporting = true
+                        } label: {
+                            Label("Import Books", systemImage: "square.and.arrow.down")
+                                .font(.headline)
+                                .padding(.horizontal, 12)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                    }
+                    .transition(.blurReplace(.downUp))
+                } else if filteredBooks.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                        .transition(.blurReplace(.downUp))
+                } else {
+                    List {
+                        ForEach(filteredBooks) { book in
+                            BookRow(book: book)
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        withAnimation(.snappy) {
+                                            library.delete(book)
+                                        }
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+
+                                    Button {
+                                        beginRenaming(book)
+                                    } label: {
+                                        Label("Rename", systemImage: "pencil")
+                                    }
+                                    .tint(.blue)
+                                }
+                                .contextMenu {
+                                    Button("Rename", systemImage: "pencil") {
+                                        beginRenaming(book)
+                                    }
+                                    Button("Delete", systemImage: "trash", role: .destructive) {
+                                        withAnimation(.snappy) {
+                                            library.delete(book)
+                                        }
+                                    }
+                                }
+                        }
+                        .onDelete { offsets in
+                            withAnimation(.snappy) {
+                                for index in offsets.sorted(by: >) {
+                                    library.delete(filteredBooks[index])
+                                }
+                            }
+                        }
+                    }
+                    .transition(.opacity)
+                }
+            }
+            .animation(.snappy, value: library.books.isEmpty)
+            .navigationTitle("Library")
+            .searchable(text: $searchText, prompt: "Search books")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Import", systemImage: "plus") {
+                        isImporting = true
+                    }
+                }
+            }
+            .fileImporter(
+                isPresented: $isImporting,
+                allowedContentTypes: BookFileType.supported,
+                allowsMultipleSelection: true
+            ) { result in
+                switch result {
+                case .success(let urls):
+                    withAnimation(.snappy) {
+                        library.importBooks(from: urls)
+                    }
+                case .failure(let error): library.present(error)
+                }
+            }
+            .alert("Import Failed", isPresented: Binding(
+                get: { library.errorMessage != nil },
+                set: { if !$0 { library.errorMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) { library.errorMessage = nil }
+            } message: {
+                Text(library.errorMessage ?? String(localized: "Unknown error"))
+            }
+            .alert("Rename Book", isPresented: Binding(
+                get: { bookToRename != nil },
+                set: { if !$0 { bookToRename = nil } }
+            )) {
+                TextField("Book name", text: $renameText)
+                Button("Cancel", role: .cancel) { bookToRename = nil }
+                Button("Rename") {
+                    if let book = bookToRename {
+                        library.rename(book, to: renameText)
+                    }
+                    bookToRename = nil
+                }
+                .disabled(renameText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            } message: {
+                Text("The file extension will be preserved.")
+            }
+        }
+    }
+
+    private func beginRenaming(_ book: Book) {
+        renameText = book.title
+        bookToRename = book
+    }
+}
+
+private struct BookRow: View {
+    let book: Book
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: iconName)
+                .font(.title2)
+                .foregroundStyle(.tint)
+                .frame(width: 36, height: 44)
+                .background(.tint.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(book.title)
+                    .font(.headline)
+                    .lineLimit(2)
+                Text("\(book.format)  ·  \(book.formattedSize)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var iconName: String {
+        switch book.format {
+        case "PDF": "doc.richtext"
+        case "TXT": "doc.plaintext"
+        default: "book.closed"
+        }
+    }
+}
+
+private struct ServerView: View {
+    @ObservedObject var server: HTTPBookServer
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                Spacer()
+
+                ServerStatusIcon(isRunning: server.isRunning)
+                    .frame(height: 96)
+
+                Text(server.isRunning ? String(localized: "Server Running") : String(localized: "Server Stopped"))
+                    .font(.title2.bold())
+                    .contentTransition(.numericText())
+                    .animation(.default, value: server.isRunning)
+                    .frame(height: 36)
+
+                Text(server.address ?? String(localized: "Local Wi-Fi sharing"))
+                    .font(.system(.body, design: server.address == nil ? .default : .monospaced))
+                    .foregroundStyle(server.address == nil ? .secondary : .primary)
+                    .textSelection(.enabled)
+                    .contentTransition(.numericText())
+                    .animation(.default, value: server.address)
+                .frame(height: 30)
+
+                Text(server.isRunning
+                     ? String(localized: "Open this address in the Kindle browser.\nKeep Kindred open while downloading.")
+                     : String(localized: "Connect your iPhone and Kindle\nto the same Wi-Fi network."))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .contentTransition(.numericText())
+                    .animation(.default, value: server.isRunning)
+                    .frame(height: 44)
+                    .padding(.top, 10)
+
+                Button {
+                    server.isRunning ? server.stop() : server.start()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: server.isRunning ? "stop.fill" : "play.fill")
+                            .contentTransition(.symbolEffect(.replace))
+                            .frame(width: 20)
+                        Text(server.isRunning ? String(localized: "Stop Server") : String(localized: "Start Server"))
+                            .contentTransition(.numericText())
+                            .animation(.default, value: server.isRunning)
+                        .frame(width: 104)
+                    }
+                    .font(.headline)
+                    .padding(.horizontal, 12)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(server.isRunning ? .red : .accentColor)
+                .controlSize(.large)
+                .padding(.top, 28)
+
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(24)
+            .animation(.snappy(duration: 0.3), value: server.isRunning)
+            .animation(.snappy(duration: 0.3), value: server.address)
+            .navigationTitle("Server")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Link(destination: URL(string: "https://github.com/kev1nweng/Kindred")!) {
+                        Image("GitHubMark")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .accessibilityLabel("GitHub")
+                    }
+                }
+            }
+            .alert("Server Error", isPresented: Binding(
+                get: { server.errorMessage != nil },
+                set: { if !$0 { server.errorMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) { server.errorMessage = nil }
+            } message: {
+                Text(server.errorMessage ?? String(localized: "Unknown error"))
+            }
+        }
+    }
+}
+
+private struct ServerStatusIcon: View {
+    let isRunning: Bool
+
+    var body: some View {
+        Image(systemName: isRunning ? "antenna.radiowaves.left.and.right" : "power")
+            .resizable()
+            .scaledToFit()
+            .frame(width: 72, height: 72)
+            .contentTransition(.symbolEffect(.replace))
+        .foregroundStyle(isRunning ? .green : .secondary)
+        .frame(width: 88, height: 88)
+        .animation(.snappy(duration: 0.3), value: isRunning)
+        .accessibilityLabel(isRunning ? String(localized: "Server running") : String(localized: "Server stopped"))
+    }
+}
+
+#Preview {
+    ContentView()
+}

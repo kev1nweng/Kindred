@@ -1,0 +1,94 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Import Failed" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "导入失败"
+          }
+        }
+      }
+    },
+    "Kindred cannot import:\n%@" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kindred 无法导入：\n%@"
+          }
+        }
+      }
+    },
+    "No files were shared." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有收到共享文件。"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "好"
+          }
+        }
+      }
+    },
+    "The shared container is unavailable." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "共享容器不可用。"
+          }
+        }
+      }
+    },
+    "Unable to read the shared file." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法读取共享文件。"
+          }
+        }
+      }
+    },
+    "Unknown file" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未知文件"
+          }
+        }
+      }
+    },
+    "Unsupported File Format" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不支持的文件格式"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

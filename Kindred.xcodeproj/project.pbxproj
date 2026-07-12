@@ -1,0 +1,554 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 54;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0CF8819540C63D0C35617BCD /* KindredApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3EE85A794F634C1E362B7D5 /* KindredApp.swift */; };
+		150A1352C2E25E0B29F53B3E /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B3F99CA30673D4C5C40DA3 /* Book.swift */; };
+		43C3258C9C31683D5E18E534 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A72AC9E1FB401408FDDAC24B /* ShareViewController.swift */; };
+		49A931152E9A079C93A57346 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 80788339EFC75CF742D1B11D /* Localizable.xcstrings */; };
+		890D43586CB23967347E5CF5 /* KindredShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 67A53536F89B05E4CE42BEC6 /* KindredShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A9C7CF1C75B32716B81E3221 /* BookLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BBA141DF55B44A9EB9C92AB /* BookLibrary.swift */; };
+		AE326F3ADEBB9ACE9246FD56 /* KindredTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AA65737C1323463145765BD /* KindredTests.swift */; };
+		C62E76CFCC56FB31AE37DEAA /* HTTPBookServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E055D6ED00D8FB015934AD9 /* HTTPBookServer.swift */; };
+		D87C22C5E634DD0390350144 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC69BCBAE00AEBBB66665D63 /* ContentView.swift */; };
+		E730525F4AE6F059A3A8092C /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 7A5052840FE41840D7BC8995 /* Localizable.xcstrings */; };
+		FA7AFBE4E49D705AB03CD7AB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D39C881320D483DFE1FAB6B8 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0B40691D2BD56CE94834A60D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F691641064B4B586D17964D9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4BC8B10CCFC26A3C4AF7B1D6;
+			remoteInfo = Kindred;
+		};
+		B61F74403F4D0ADA094B2E7B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F691641064B4B586D17964D9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 832358532809E076FA794564;
+			remoteInfo = KindredShare;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BE6502C8F4DEB45EAE15D0EB /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				890D43586CB23967347E5CF5 /* KindredShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		2E055D6ED00D8FB015934AD9 /* HTTPBookServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPBookServer.swift; sourceTree = "<group>"; };
+		5AA65737C1323463145765BD /* KindredTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindredTests.swift; sourceTree = "<group>"; };
+		67A53536F89B05E4CE42BEC6 /* KindredShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = KindredShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		74B3F99CA30673D4C5C40DA3 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
+		776F85584ADFADA9DD5079BB /* Kindred.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Kindred.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7A5052840FE41840D7BC8995 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		80788339EFC75CF742D1B11D /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		89ABD03E904E24F76088A857 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		9BBA141DF55B44A9EB9C92AB /* BookLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookLibrary.swift; sourceTree = "<group>"; };
+		A3D37A9B6A3BFC587A8C3C42 /* KindredTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KindredTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A72AC9E1FB401408FDDAC24B /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		AC69BCBAE00AEBBB66665D63 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		D39C881320D483DFE1FAB6B8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D7E34F56FBE16CF696093CD8 /* KindredShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KindredShare.entitlements; sourceTree = "<group>"; };
+		E3EE85A794F634C1E362B7D5 /* KindredApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindredApp.swift; sourceTree = "<group>"; };
+		F11BED87516AEE23A5050234 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		F68D9ADCED2FCD6B6EAE3D3A /* Kindred.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Kindred.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		09BC69C670FE39E727F8D21C = {
+			isa = PBXGroup;
+			children = (
+				B9B56AC82BAB4B97BA939845 /* Kindred */,
+				CA681F64B1D99ACDF8958417 /* KindredShare */,
+				A0334800DF54287C4462552F /* KindredTests */,
+				721F6ECD66A6957E6057BA83 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		721F6ECD66A6957E6057BA83 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				776F85584ADFADA9DD5079BB /* Kindred.app */,
+				67A53536F89B05E4CE42BEC6 /* KindredShare.appex */,
+				A3D37A9B6A3BFC587A8C3C42 /* KindredTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A0334800DF54287C4462552F /* KindredTests */ = {
+			isa = PBXGroup;
+			children = (
+				5AA65737C1323463145765BD /* KindredTests.swift */,
+			);
+			path = KindredTests;
+			sourceTree = "<group>";
+		};
+		B9B56AC82BAB4B97BA939845 /* Kindred */ = {
+			isa = PBXGroup;
+			children = (
+				D39C881320D483DFE1FAB6B8 /* Assets.xcassets */,
+				74B3F99CA30673D4C5C40DA3 /* Book.swift */,
+				9BBA141DF55B44A9EB9C92AB /* BookLibrary.swift */,
+				AC69BCBAE00AEBBB66665D63 /* ContentView.swift */,
+				2E055D6ED00D8FB015934AD9 /* HTTPBookServer.swift */,
+				89ABD03E904E24F76088A857 /* Info.plist */,
+				F68D9ADCED2FCD6B6EAE3D3A /* Kindred.entitlements */,
+				E3EE85A794F634C1E362B7D5 /* KindredApp.swift */,
+				7A5052840FE41840D7BC8995 /* Localizable.xcstrings */,
+			);
+			path = Kindred;
+			sourceTree = "<group>";
+		};
+		CA681F64B1D99ACDF8958417 /* KindredShare */ = {
+			isa = PBXGroup;
+			children = (
+				F11BED87516AEE23A5050234 /* Info.plist */,
+				D7E34F56FBE16CF696093CD8 /* KindredShare.entitlements */,
+				80788339EFC75CF742D1B11D /* Localizable.xcstrings */,
+				A72AC9E1FB401408FDDAC24B /* ShareViewController.swift */,
+			);
+			path = KindredShare;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4BC8B10CCFC26A3C4AF7B1D6 /* Kindred */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AD14E7691EF2A3D90409D2BC /* Build configuration list for PBXNativeTarget "Kindred" */;
+			buildPhases = (
+				351D0973FF7575FFB4F0B8F5 /* Sources */,
+				E3FFD51ECFC50E0711EBEB66 /* Resources */,
+				BE6502C8F4DEB45EAE15D0EB /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BEB975AF87D68CF211E2419E /* PBXTargetDependency */,
+			);
+			name = Kindred;
+			packageProductDependencies = (
+			);
+			productName = Kindred;
+			productReference = 776F85584ADFADA9DD5079BB /* Kindred.app */;
+			productType = "com.apple.product-type.application";
+		};
+		65D1B236AE528565263A2E63 /* KindredTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DC3DB342FCA8CAF7B40FDBE7 /* Build configuration list for PBXNativeTarget "KindredTests" */;
+			buildPhases = (
+				7A113FA3C763B0DB746D76E9 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5DC034EE0675C717BFD5D74F /* PBXTargetDependency */,
+			);
+			name = KindredTests;
+			packageProductDependencies = (
+			);
+			productName = KindredTests;
+			productReference = A3D37A9B6A3BFC587A8C3C42 /* KindredTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		832358532809E076FA794564 /* KindredShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF2C58527E4E0EA49F7EC076 /* Build configuration list for PBXNativeTarget "KindredShare" */;
+			buildPhases = (
+				CBEED7FA7830F88B32EBECFF /* Sources */,
+				FA230CBEEF4888AEB0C51319 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = KindredShare;
+			packageProductDependencies = (
+			);
+			productName = KindredShare;
+			productReference = 67A53536F89B05E4CE42BEC6 /* KindredShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F691641064B4B586D17964D9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = EB33AAF8AE6611F4F186CFED /* Build configuration list for PBXProject "Kindred" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+				"zh-Hans",
+			);
+			mainGroup = 09BC69C670FE39E727F8D21C;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 54;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4BC8B10CCFC26A3C4AF7B1D6 /* Kindred */,
+				832358532809E076FA794564 /* KindredShare */,
+				65D1B236AE528565263A2E63 /* KindredTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E3FFD51ECFC50E0711EBEB66 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FA7AFBE4E49D705AB03CD7AB /* Assets.xcassets in Resources */,
+				E730525F4AE6F059A3A8092C /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FA230CBEEF4888AEB0C51319 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				49A931152E9A079C93A57346 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		351D0973FF7575FFB4F0B8F5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				150A1352C2E25E0B29F53B3E /* Book.swift in Sources */,
+				A9C7CF1C75B32716B81E3221 /* BookLibrary.swift in Sources */,
+				D87C22C5E634DD0390350144 /* ContentView.swift in Sources */,
+				C62E76CFCC56FB31AE37DEAA /* HTTPBookServer.swift in Sources */,
+				0CF8819540C63D0C35617BCD /* KindredApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A113FA3C763B0DB746D76E9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AE326F3ADEBB9ACE9246FD56 /* KindredTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CBEED7FA7830F88B32EBECFF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				43C3258C9C31683D5E18E534 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5DC034EE0675C717BFD5D74F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4BC8B10CCFC26A3C4AF7B1D6 /* Kindred */;
+			targetProxy = 0B40691D2BD56CE94834A60D /* PBXContainerItemProxy */;
+		};
+		BEB975AF87D68CF211E2419E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 832358532809E076FA794564 /* KindredShare */;
+			targetProxy = B61F74403F4D0ADA094B2E7B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		14489C0297331738D7B163CB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Kindred/Kindred.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Kindred/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = space.kev1nweng.kindred;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		16C2D0FAF0B5C18464A3C30B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Kindred/Kindred.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Kindred/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = space.kev1nweng.kindred;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		16EEDD6800D685819B36C059 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = KindredShare/KindredShare.entitlements;
+				INFOPLIST_FILE = KindredShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = space.kev1nweng.kindred.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		687B893585EC9E6729D602A3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		7D987577CFEA604DB75F7C6C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = KindredShare/KindredShare.entitlements;
+				INFOPLIST_FILE = KindredShare/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = space.kev1nweng.kindred.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A2CE6DFD6E3FAD8D9B6EFAD2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		E26A1A00C29A590910F5F246 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = space.kev1nweng.kindred.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kindred.app/Kindred";
+			};
+			name = Release;
+		};
+		EC4A0E4C3EDE35029D8EFD6B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = space.kev1nweng.kindred.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kindred.app/Kindred";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AD14E7691EF2A3D90409D2BC /* Build configuration list for PBXNativeTarget "Kindred" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				14489C0297331738D7B163CB /* Debug */,
+				16C2D0FAF0B5C18464A3C30B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AF2C58527E4E0EA49F7EC076 /* Build configuration list for PBXNativeTarget "KindredShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				16EEDD6800D685819B36C059 /* Debug */,
+				7D987577CFEA604DB75F7C6C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DC3DB342FCA8CAF7B40FDBE7 /* Build configuration list for PBXNativeTarget "KindredTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EC4A0E4C3EDE35029D8EFD6B /* Debug */,
+				E26A1A00C29A590910F5F246 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EB33AAF8AE6611F4F186CFED /* Build configuration list for PBXProject "Kindred" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				687B893585EC9E6729D602A3 /* Debug */,
+				A2CE6DFD6E3FAD8D9B6EFAD2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F691641064B4B586D17964D9 /* Project object */;
+}
