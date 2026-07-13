@@ -61,19 +61,6 @@ final class BookLibrary: ObservableObject {
         do { try save() } catch { errorMessage = error.localizedDescription }
     }
 
-    /// Import a book downloaded from ZLibrary.
-    /// The source file is a local temp file from the download method,
-    /// so no security-scoped access is needed.
-    func importDownloadedBook(from url: URL, preferredTitle: String? = nil) {
-        do {
-            try importBook(from: url, preferredTitle: preferredTitle)
-            books.sort { $0.importedAt > $1.importedAt }
-            try save()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
     func delete(_ book: Book) {
         delete(book, saveAfterwards: true)
     }
@@ -150,7 +137,7 @@ final class BookLibrary: ObservableObject {
         }
     }
 
-    private func importBook(from sourceURL: URL, preferredTitle: String? = nil) throws {
+    private func importBook(from sourceURL: URL) throws {
         let ext = sourceURL.pathExtension.lowercased()
         guard BookFileType.extensions.contains(ext) else {
             throw LibraryError.unsupportedFormat(ext.isEmpty ? "unknown" : ext)
@@ -165,7 +152,7 @@ final class BookLibrary: ObservableObject {
         try fileManager.copyItem(at: sourceURL, to: destination)
 
         let filename = sourceURL.lastPathComponent
-        let title = preferredTitle ?? sourceURL.deletingPathExtension().lastPathComponent
+        let title = sourceURL.deletingPathExtension().lastPathComponent
         books.append(Book(
             id: id,
             title: title.isEmpty ? filename : title,

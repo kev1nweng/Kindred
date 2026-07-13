@@ -1,0 +1,41 @@
+import Foundation
+import SwiftUI
+
+/// SwiftUI-facing wrapper for ZLibrary download handling.
+/// With the pure-WebView approach, the ViewModel only handles
+/// download completion → library import and error display.
+@MainActor
+final class ZLibraryViewModel: ObservableObject {
+    @Published var errorMessage: String?
+    @Published var downloadStatus: DownloadStatus?
+
+    enum DownloadStatus: Equatable {
+        case downloading(String)
+        case importing(String)
+        case success(String)
+        case failed(String)
+    }
+
+    // MARK: - Download → Library import
+
+    func handleDownloadedFile(at url: URL, title: String, library: BookLibrary) {
+        let ext = url.pathExtension.lowercased()
+        guard BookFileType.extensions.contains(ext) else {
+            downloadStatus = .failed("Unsupported format: .\(ext)")
+            errorMessage = "Unsupported format: .\(ext)"
+            return
+        }
+
+        downloadStatus = .importing(title)
+        library.importDownloadedBook(from: url, preferredTitle: title)
+        try? FileManager.default.removeItem(at: url)
+        downloadStatus = .success(title)
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            if case .success = downloadStatus {
+                withAnimation(.snappy) { downloadStatus = nil }
+            }
+        }
+    }
+}

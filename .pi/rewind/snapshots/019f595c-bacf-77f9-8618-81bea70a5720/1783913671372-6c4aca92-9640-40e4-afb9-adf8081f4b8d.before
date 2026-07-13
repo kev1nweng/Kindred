@@ -1,0 +1,50 @@
+import Foundation
+import SwiftUI
+import WebKit
+
+/// SwiftUI-facing wrapper for the `ZLibraryClient` actor.
+/// Bridges the actor's async API into `@Published` state for reactive UI.
+@MainActor
+final class ZLibraryViewModel: ObservableObject {
+    @Published private(set) var isLoggedIn = false
+    @Published private(set) var isLoggingIn = false
+    @Published private(set) var profile: ZLibraryProfileInfo?
+    @Published var errorMessage: String?
+
+    private let client: ZLibraryClient
+
+    init(client: ZLibraryClient = ZLibraryClient()) {
+        self.client = client
+    }
+
+    /// Restore session from cookies extracted by WKWebView after
+    /// the user logs in through the web login flow.
+    func restoreSession(cookies: [HTTPCookie]) async {
+        isLoggingIn = true
+        errorMessage = nil
+
+        await client.restoreSession(cookies: cookies)
+
+        // Verify we got the essential auth cookies
+        let hasRemixCookies = cookies.contains { $0.name.hasPrefix("remix") }
+        if hasRemixCookies {
+            let info = await client.profile
+            withAnimation(.snappy) {
+                profile = info
+                isLoggedIn = true
+            }
+        } else {
+            errorMessage = "Login did not produce valid session cookies."
+        }
+
+        isLoggingIn = false
+    }
+
+    func logout() async {
+        await client.logout()
+        withAnimation(.snappy) {
+            profile = nil
+            isLoggedIn = false
+        }
+    }
+}

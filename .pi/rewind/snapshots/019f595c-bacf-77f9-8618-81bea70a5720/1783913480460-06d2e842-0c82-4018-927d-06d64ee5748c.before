@@ -1,0 +1,85 @@
+import SwiftUI
+import WebKit
+
+/// A WKWebView-based login flow for ZLibrary.
+///
+/// ZLibrary is behind Cloudflare's JavaScript challenge, so a plain
+/// HTTP client cannot authenticate. This view loads the real login
+/// page in WebKit, lets the user log in normally, then extracts the
+/// session cookies (`remix_userid`, `remix_userkey`) for use by
+/// `ZLibraryClient`'s URLSession-based API calls.
+struct ZLibraryWebLoginView: UIViewRepresentable {
+    let loginURL: URL
+    let onCookiesExtracted: ([HTTPCookie]) -> Void
+    let onError: (String) -> Void
+
+    // ZLibrary domains that may set cookies across mirrors
+    private let cookieDomains = ["z-lib.pub", "z-library.im", ".z-lib.pub", ".z-library.im"]
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.websiteDataStore = WKWebsiteDataStore.default()  // non-private so cookies persist
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = context.coordinator
+        webView.load(URLRequest(url: loginURL))
+        return webView
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate {
+        let parent: ZLibraryWebLoginView
+        private var hasExtracted = false
+
+        init(parent: ZLibraryWebLoginView) {
+            self.parent = parent
+        }
+
+        func webView(_ webView: WKWebView,
+                     didFinish navigation: WKNavigation!) {
+            extractCookies(from: webView)
+        }
+
+        func webView(_ webView: WKWebView,
+                     didStartProvisionalNavigation navigation: WKNavigation!) {
+            // Check on every navigation — the login redirect may set cookies
+            // before didFinish fires.
+            extractCookies(from: webView)
+        }
+
+        private func extractCookies(from webView: WKWebView) {
+            guard !hasExtracted else { return }
+
+            let store = webView.configuration.websiteDataStore.httpCookieStore
+
+            store.getAllCookies { [weak self] cookies in
+                guard let self else { return }
+
+                // Look for remix_userid and remix_userkey cookies
+                let remixCookies = cookies.filter {
+                    $0.name == "remix_userid" || $0.name == "remix_userkey"
+                }
+
+                guard remixCookies.count >= 2 else { return }
+
+                // Also grab all other cookies from ZLibrary domains for completeness
+                let zLibCookies = cookies.filter { cookie in
+                    self.parent.cookieDomains.contains { domain in
+                        cookie.domain.hasSuffix(domain)
+                    }
+                }
+
+                self.hasExtracted = true
+
+                DispatchQueue.main.async {
+                    self.parent.onCookiesExtracted(zLibCookies)
+                }
+            }
+        }
+    }
+}

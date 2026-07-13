@@ -11,20 +11,6 @@
         }
       }
     },
-    "%@%%" : {
-
-    },
-    "Account" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "账户"
-          }
-        }
-      }
-    },
     "Book name" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -80,17 +66,6 @@
         }
       }
     },
-    "Connected" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已连接"
-          }
-        }
-      }
-    },
     "Delete" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -102,9 +77,6 @@
         }
       }
     },
-    "Done" : {
-
-    },
     "Download" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -112,17 +84,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下载"
-          }
-        }
-      }
-    },
-    "Email" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "邮箱"
           }
         }
       }
@@ -236,61 +197,6 @@
         }
       }
     },
-    "Log In" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "登录"
-          }
-        }
-      }
-    },
-    "Log in to your ZLibrary account to search and download books." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "登录 ZLibrary 账户以搜索和下载书籍。"
-          }
-        }
-      }
-    },
-    "Logged in as %@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已登录：%@"
-          }
-        }
-      }
-    },
-    "Logging in…" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "正在登录…"
-          }
-        }
-      }
-    },
-    "Login Failed" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "登录失败"
-          }
-        }
-      }
-    },
     "No Books" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -335,18 +241,8 @@
         }
       }
     },
-    "Not Connected" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "未连接"
-          }
-        }
-      }
-    },
     "OK" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -385,17 +281,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "请在 Kindle 浏览器中打开此地址。下载时请保持 Kindred 在前台运行。"
-          }
-        }
-      }
-    },
-    "Password" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "密码"
           }
         }
       }
@@ -593,39 +478,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不支持的文件类型：%@"
-          }
-        }
-      }
-    },
-    "You are logged in to ZLibrary." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "您已登录 ZLibrary。"
-          }
-        }
-      }
-    },
-    "your@email.com" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "your@email.com"
-          }
-        }
-      }
-    },
-    "Z-Library" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Z-Library"
           }
         }
       }

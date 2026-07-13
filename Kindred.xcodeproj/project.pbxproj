@@ -7,16 +7,24 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		02C2717B88535DF27AA3B29A /* ZLibraryHTMLParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = D48844FE904EAB3E4044911E /* ZLibraryHTMLParser.swift */; };
+		066A3A3DAEC08925E6812ABF /* ZLibraryBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A41CE78F387B8BD559A4F054 /* ZLibraryBrowserView.swift */; };
 		0CF8819540C63D0C35617BCD /* KindredApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3EE85A794F634C1E362B7D5 /* KindredApp.swift */; };
 		150A1352C2E25E0B29F53B3E /* Book.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74B3F99CA30673D4C5C40DA3 /* Book.swift */; };
+		32B172B0ADE0C042A5A03C5A /* ZLibraryError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07FDA9911822970771F96C4F /* ZLibraryError.swift */; };
 		43C3258C9C31683D5E18E534 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A72AC9E1FB401408FDDAC24B /* ShareViewController.swift */; };
 		49A931152E9A079C93A57346 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 80788339EFC75CF742D1B11D /* Localizable.xcstrings */; };
+		67C6DF95B4B3FA4C19050C78 /* ZLibraryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A9E37DAC222D13A81B17079 /* ZLibraryViewModel.swift */; };
 		890D43586CB23967347E5CF5 /* KindredShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 67A53536F89B05E4CE42BEC6 /* KindredShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8928802704BCAD0A94D42807 /* ZLibraryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898EA9AFFAF67931E23CB6CB /* ZLibraryClient.swift */; };
+		985BF3AF0905D5F0C03CA80A /* ZLibraryWebLoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E0A54F2B3C6146D69AD643F /* ZLibraryWebLoginView.swift */; };
+		9B866E9D8767CAA788BCD7A5 /* ZLibraryModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D4796F46D9FD54339FB106F /* ZLibraryModels.swift */; };
 		A9C7CF1C75B32716B81E3221 /* BookLibrary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9BBA141DF55B44A9EB9C92AB /* BookLibrary.swift */; };
 		AE326F3ADEBB9ACE9246FD56 /* KindredTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AA65737C1323463145765BD /* KindredTests.swift */; };
 		C62E76CFCC56FB31AE37DEAA /* HTTPBookServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E055D6ED00D8FB015934AD9 /* HTTPBookServer.swift */; };
 		D87C22C5E634DD0390350144 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC69BCBAE00AEBBB66665D63 /* ContentView.swift */; };
 		E730525F4AE6F059A3A8092C /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 7A5052840FE41840D7BC8995 /* Localizable.xcstrings */; };
+		F165A0B9D84C4F1E0AD3DF1D /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 85C4365021766CD29800A711 /* SwiftSoup */; };
 		FA7AFBE4E49D705AB03CD7AB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D39C881320D483DFE1FAB6B8 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -52,24 +60,43 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		07FDA9911822970771F96C4F /* ZLibraryError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLibraryError.swift; sourceTree = "<group>"; };
+		0E0A54F2B3C6146D69AD643F /* ZLibraryWebLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLibraryWebLoginView.swift; sourceTree = "<group>"; };
 		2E055D6ED00D8FB015934AD9 /* HTTPBookServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTTPBookServer.swift; sourceTree = "<group>"; };
 		5AA65737C1323463145765BD /* KindredTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindredTests.swift; sourceTree = "<group>"; };
+		5D4796F46D9FD54339FB106F /* ZLibraryModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLibraryModels.swift; sourceTree = "<group>"; };
 		67A53536F89B05E4CE42BEC6 /* KindredShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = KindredShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		74B3F99CA30673D4C5C40DA3 /* Book.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Book.swift; sourceTree = "<group>"; };
 		776F85584ADFADA9DD5079BB /* Kindred.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kindred.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7A5052840FE41840D7BC8995 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		80788339EFC75CF742D1B11D /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		898EA9AFFAF67931E23CB6CB /* ZLibraryClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLibraryClient.swift; sourceTree = "<group>"; };
 		89ABD03E904E24F76088A857 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8A9E37DAC222D13A81B17079 /* ZLibraryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLibraryViewModel.swift; sourceTree = "<group>"; };
 		9BBA141DF55B44A9EB9C92AB /* BookLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookLibrary.swift; sourceTree = "<group>"; };
 		A3D37A9B6A3BFC587A8C3C42 /* KindredTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KindredTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A41CE78F387B8BD559A4F054 /* ZLibraryBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLibraryBrowserView.swift; sourceTree = "<group>"; };
 		A72AC9E1FB401408FDDAC24B /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		AC69BCBAE00AEBBB66665D63 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C92971705CFEC24ED9914A40 /* SwiftSoup */ = {isa = PBXFileReference; lastKnownFileType = folder; name = SwiftSoup; path = Vendor/SwiftSoup; sourceTree = SOURCE_ROOT; };
 		D39C881320D483DFE1FAB6B8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D48844FE904EAB3E4044911E /* ZLibraryHTMLParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZLibraryHTMLParser.swift; sourceTree = "<group>"; };
 		D7E34F56FBE16CF696093CD8 /* KindredShare.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KindredShare.entitlements; sourceTree = "<group>"; };
 		E3EE85A794F634C1E362B7D5 /* KindredApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KindredApp.swift; sourceTree = "<group>"; };
 		F11BED87516AEE23A5050234 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F68D9ADCED2FCD6B6EAE3D3A /* Kindred.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Kindred.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		23B6081A1E96DD7013580DB9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F165A0B9D84C4F1E0AD3DF1D /* SwiftSoup in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		09BC69C670FE39E727F8D21C = {
@@ -78,8 +105,31 @@
 				B9B56AC82BAB4B97BA939845 /* Kindred */,
 				CA681F64B1D99ACDF8958417 /* KindredShare */,
 				A0334800DF54287C4462552F /* KindredTests */,
+				15C8BE801B49FB36A67222C7 /* Packages */,
 				721F6ECD66A6957E6057BA83 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		15C8BE801B49FB36A67222C7 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				C92971705CFEC24ED9914A40 /* SwiftSoup */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		2BF703117649373B72986319 /* ZLibrary */ = {
+			isa = PBXGroup;
+			children = (
+				A41CE78F387B8BD559A4F054 /* ZLibraryBrowserView.swift */,
+				898EA9AFFAF67931E23CB6CB /* ZLibraryClient.swift */,
+				07FDA9911822970771F96C4F /* ZLibraryError.swift */,
+				D48844FE904EAB3E4044911E /* ZLibraryHTMLParser.swift */,
+				5D4796F46D9FD54339FB106F /* ZLibraryModels.swift */,
+				8A9E37DAC222D13A81B17079 /* ZLibraryViewModel.swift */,
+				0E0A54F2B3C6146D69AD643F /* ZLibraryWebLoginView.swift */,
+			);
+			path = ZLibrary;
 			sourceTree = "<group>";
 		};
 		721F6ECD66A6957E6057BA83 /* Products */ = {
@@ -112,6 +162,7 @@
 				F68D9ADCED2FCD6B6EAE3D3A /* Kindred.entitlements */,
 				E3EE85A794F634C1E362B7D5 /* KindredApp.swift */,
 				7A5052840FE41840D7BC8995 /* Localizable.xcstrings */,
+				2BF703117649373B72986319 /* ZLibrary */,
 			);
 			path = Kindred;
 			sourceTree = "<group>";
@@ -136,6 +187,7 @@
 			buildPhases = (
 				351D0973FF7575FFB4F0B8F5 /* Sources */,
 				E3FFD51ECFC50E0711EBEB66 /* Resources */,
+				23B6081A1E96DD7013580DB9 /* Frameworks */,
 				BE6502C8F4DEB45EAE15D0EB /* Embed Foundation Extensions */,
 			);
 			buildRules = (
@@ -145,6 +197,7 @@
 			);
 			name = Kindred;
 			packageProductDependencies = (
+				85C4365021766CD29800A711 /* SwiftSoup */,
 			);
 			productName = Kindred;
 			productReference = 776F85584ADFADA9DD5079BB /* Kindred.app */;
@@ -206,6 +259,9 @@
 			);
 			mainGroup = 09BC69C670FE39E727F8D21C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FB5DBE2CE661119BE5A45653 /* XCLocalSwiftPackageReference "Vendor/SwiftSoup" */,
+			);
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -246,6 +302,13 @@
 				D87C22C5E634DD0390350144 /* ContentView.swift in Sources */,
 				C62E76CFCC56FB31AE37DEAA /* HTTPBookServer.swift in Sources */,
 				0CF8819540C63D0C35617BCD /* KindredApp.swift in Sources */,
+				066A3A3DAEC08925E6812ABF /* ZLibraryBrowserView.swift in Sources */,
+				8928802704BCAD0A94D42807 /* ZLibraryClient.swift in Sources */,
+				32B172B0ADE0C042A5A03C5A /* ZLibraryError.swift in Sources */,
+				02C2717B88535DF27AA3B29A /* ZLibraryHTMLParser.swift in Sources */,
+				9B866E9D8767CAA788BCD7A5 /* ZLibraryModels.swift in Sources */,
+				67C6DF95B4B3FA4C19050C78 /* ZLibraryViewModel.swift in Sources */,
+				985BF3AF0905D5F0C03CA80A /* ZLibraryWebLoginView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -369,7 +432,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -389,7 +452,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -453,7 +516,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -467,7 +530,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -552,6 +615,20 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		FB5DBE2CE661119BE5A45653 /* XCLocalSwiftPackageReference "Vendor/SwiftSoup" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/SwiftSoup;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		85C4365021766CD29800A711 /* SwiftSoup */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftSoup;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F691641064B4B586D17964D9 /* Project object */;
 }

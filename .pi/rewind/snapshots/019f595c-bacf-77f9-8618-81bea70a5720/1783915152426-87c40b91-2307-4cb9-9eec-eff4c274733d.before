@@ -1,0 +1,94 @@
+import Foundation
+import SwiftUI
+import WebKit
+
+/// SwiftUI-facing wrapper for ZLibrary state.
+/// With the pure-WebView approach, the ViewModel only tracks
+/// login state and handles download → library import.
+@MainActor
+final class ZLibraryViewModel: ObservableObject {
+    @Published private(set) var isLoggedIn = false
+    @Published private(set) var profile: ZLibraryProfileInfo?
+    @Published var errorMessage: String?
+
+    // Download feedback
+    @Published var downloadStatus: DownloadStatus?
+
+    enum DownloadStatus: Equatable {
+        case downloading(String)
+        case importing(String)
+        case success(String)
+        case failed(String)
+    }
+
+    init() {
+        // Check if there are persistent cookies from a previous session
+        checkPersistedLogin()
+    }
+
+    // MARK: - Login state
+
+    func updateLoginState(_ loggedIn: Bool) {
+        if isLoggedIn != loggedIn {
+            withAnimation(.snappy) {
+                isLoggedIn = loggedIn
+            }
+        }
+    }
+
+    private func checkPersistedLogin() {
+        let store = WKWebsiteDataStore.default()
+        store.httpCookieStore.getAllCookies { [weak self] cookies in
+            let loggedIn = cookies.contains { $0.name == "remix_userid" }
+            Task { @MainActor in
+                self?.isLoggedIn = loggedIn
+            }
+        }
+    }
+
+    // MARK: - Logout
+
+    func logout() {
+        let store = WKWebsiteDataStore.default()
+        store.fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+            store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(),
+                             for: records) {}
+        }
+        withAnimation(.snappy) {
+            isLoggedIn = false
+            profile = nil
+        }
+    }
+
+    // MARK: - Download → Library import
+
+    func handleDownloadedFile(at url: URL, title: String, library: BookLibrary) {
+        downloadStatus = .downloading(title)
+
+        // Check if the format is supported
+        let ext = url.pathExtension.lowercased()
+        guard BookFileType.extensions.contains(ext) else {
+            downloadStatus = .failed("Unsupported format: .\(ext)")
+            errorMessage = "Unsupported format: .\(ext)"
+            return
+        }
+
+        downloadStatus = .importing(title)
+        library.importDownloadedBook(from: url, preferredTitle: title)
+
+        // Clean up temp file
+        try? FileManager.default.removeItem(at: url)
+
+        downloadStatus = .success(title)
+
+        // Auto-clear success status after a delay
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            if case .success = downloadStatus {
+                withAnimation(.snappy) {
+                    downloadStatus = nil
+                }
+            }
+        }
+    }
+}

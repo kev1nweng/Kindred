@@ -122,7 +122,6 @@ private struct LibraryView: View {
             }
             .animation(.snappy, value: library.books.isEmpty)
             .navigationTitle("Library")
-            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, prompt: "Search books")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -214,60 +213,56 @@ private struct ServerView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
+            VStack(spacing: 0) {
                 Spacer()
 
-                // Main status group
-                VStack(spacing: 16) {
-                    ServerStatusIcon(isRunning: server.isRunning)
-                        .frame(width: 88, height: 88)
+                ServerStatusIcon(isRunning: server.isRunning)
+                    .frame(height: 96)
 
-                    VStack(spacing: 6) {
-                        Text(server.isRunning ? String(localized: "Server Running") : String(localized: "Server Stopped"))
-                            .font(.title2.bold())
+                Text(server.isRunning ? String(localized: "Server Running") : String(localized: "Server Stopped"))
+                    .font(.title2.bold())
+                    .contentTransition(.numericText())
+                    .animation(.default, value: server.isRunning)
+                    .frame(height: 36)
+
+                Text(server.address ?? String(localized: "Local Wi-Fi sharing"))
+                    .font(.system(.body, design: server.address == nil ? .default : .monospaced))
+                    .foregroundStyle(server.address == nil ? .secondary : .primary)
+                    .textSelection(.enabled)
+                    .contentTransition(.numericText())
+                    .animation(.default, value: server.address)
+                .frame(height: 30)
+
+                Text(server.isRunning
+                     ? String(localized: "Open this address in the Kindle browser.\nKeep Kindred open while downloading.")
+                     : String(localized: "Connect your iPhone and Kindle\nto the same Wi-Fi network."))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .contentTransition(.numericText())
+                    .animation(.default, value: server.isRunning)
+                    .frame(height: 44)
+                    .padding(.top, 10)
+
+                Button {
+                    server.isRunning ? server.stop() : server.start()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: server.isRunning ? "stop.fill" : "play.fill")
+                            .contentTransition(.symbolEffect(.replace))
+                            .frame(width: 20)
+                        Text(server.isRunning ? String(localized: "Stop Server") : String(localized: "Start Server"))
                             .contentTransition(.numericText())
                             .animation(.default, value: server.isRunning)
-
-                        Text(server.address ?? String(localized: "Local Wi-Fi sharing"))
-                            .font(.system(.body, design: server.address == nil ? .default : .monospaced))
-                            .foregroundStyle(server.address == nil ? .secondary : .primary)
-                            .textSelection(.enabled)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.6)
-                            .contentTransition(.numericText())
-                            .animation(.default, value: server.address)
+                        .frame(width: 104)
                     }
+                    .font(.headline)
+                    .padding(.horizontal, 12)
                 }
-
-                // Instruction + action group
-                VStack(spacing: 20) {
-                    Text(server.isRunning
-                         ? String(localized: "Open this address in the Kindle browser.\nKeep Kindred open while downloading.")
-                         : String(localized: "Connect your iPhone and Kindle\nto the same Wi-Fi network."))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .contentTransition(.numericText())
-                        .animation(.default, value: server.isRunning)
-
-                    Button {
-                        server.isRunning ? server.stop() : server.start()
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: server.isRunning ? "stop.fill" : "play.fill")
-                                .contentTransition(.symbolEffect(.replace))
-                                .frame(width: 20)
-                            Text(server.isRunning ? String(localized: "Stop Server") : String(localized: "Start Server"))
-                                .contentTransition(.numericText())
-                                .animation(.default, value: server.isRunning)
-                        }
-                        .font(.headline)
-                        .padding(.horizontal, 12)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(server.isRunning ? .red : .accentColor)
-                    .controlSize(.large)
-                }
+                .buttonStyle(.borderedProminent)
+                .tint(server.isRunning ? .red : .accentColor)
+                .controlSize(.large)
+                .padding(.top, 28)
 
                 Spacer()
             }
@@ -282,7 +277,7 @@ private struct ServerView: View {
                         Image("GitHubMark")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 24, height: 24)
+                            .frame(width: 20, height: 20)
                             .accessibilityLabel("GitHub")
                     }
                 }
@@ -307,225 +302,187 @@ private struct ServerStatusIcon: View {
             .resizable()
             .scaledToFit()
             .frame(width: 72, height: 72)
-            .foregroundStyle(isRunning ? .green : .secondary)
             .contentTransition(.symbolEffect(.replace))
-            .animation(.snappy(duration: 0.3), value: isRunning)
-            .accessibilityLabel(isRunning ? String(localized: "Server running") : String(localized: "Server stopped"))
+        .foregroundStyle(isRunning ? .green : .secondary)
+        .frame(width: 88, height: 88)
+        .animation(.snappy(duration: 0.3), value: isRunning)
+        .accessibilityLabel(isRunning ? String(localized: "Server running") : String(localized: "Server stopped"))
     }
 }
 
 private struct ZLibraryView: View {
     @ObservedObject var viewModel: ZLibraryViewModel
     @ObservedObject var library: BookLibrary
-
-    private let zlibraryURL = URL(string: "https://z-library.im")!
+    @State private var showLoginSheet = false
+    @State private var showLogoutDialog = false
 
     var body: some View {
         NavigationStack {
-            ZLibraryBrowserView(
-                startURL: zlibraryURL,
-                onDownloadComplete: { fileURL, title in
-                    viewModel.handleDownloadedFile(at: fileURL, title: title, library: library)
-                },
-                onDownloadStart: { filename in
-                    viewModel.downloadStarted(filename: filename)
-                },
-                onDownloadProgress: { progress in
-                    viewModel.updateDownloadProgress(progress)
-                },
-                onDownloadError: { message in
-                    viewModel.errorMessage = message
-                    viewModel.downloadStatus = nil
-                },
-                onLoadingStateChanged: { loading in
-                    viewModel.setLoading(loading)
+            Group {
+                if viewModel.isLoggingIn {
+                    ZLibraryLoadingView()
+                        .transition(.blurReplace(.downUp))
+                } else if viewModel.isLoggedIn {
+                    ZLibraryLoggedInView(viewModel: viewModel)
+                        .transition(.blurReplace(.downUp))
+                } else {
+                    ZLibrarySignedOutView()
+                        .transition(.blurReplace(.downUp))
                 }
-            )
-            .ignoresSafeArea(edges: .bottom)
-            .navigationTitle(viewModel.isLoading ? "Loading…" : "Z-Library")
-            .navigationBarTitleDisplayMode(.inline)
-            .contentTransition(.numericText())
-            .animation(.snappy, value: viewModel.isLoading)
-            .sheet(isPresented: Binding(
-                get: { viewModel.downloadStatus != nil },
-                set: { if !$0 { viewModel.dismissDownloadStatus() } }
-            )) {
-                ZLibraryDownloadSheet(status: viewModel.downloadStatus ?? .failed(""), progress: viewModel.downloadProgress) {
-                    viewModel.dismissDownloadStatus()
-                }
-                .presentationDetents([.fraction(0.55)])
-                .presentationDragIndicator(.visible)
-                .interactiveDismissDisabled(viewModel.downloadStatus.map { status in
-                    if case .success = status { return false }
-                    if case .failed = status { return false }
-                    return true
-                } ?? true)
             }
-            .alert("Error", isPresented: Binding(
+            .animation(.snappy, value: viewModel.isLoggedIn)
+            .animation(.snappy, value: viewModel.isLoggingIn)
+            .navigationTitle("Z-Library")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        if viewModel.isLoggedIn {
+                            showLogoutDialog = true
+                        } else {
+                            showLoginSheet = true
+                        }
+                    } label: {
+                        Image(systemName: viewModel.isLoggedIn ? "person.crop.circle.badge.checkmark" : "person.crop.circle")
+                            .contentTransition(.symbolEffect(.replace))
+                            .accessibilityLabel(viewModel.isLoggedIn ? String(localized: "Account") : String(localized: "Log In"))
+                    }
+                }
+            }
+            .sheet(isPresented: $showLoginSheet) {
+                ZLibraryWebLoginSheet(viewModel: viewModel, isPresented: $showLoginSheet)
+            }
+            .confirmationDialog(
+                viewModel.profile?.email ?? viewModel.profile?.displayName ?? "ZLibrary",
+                isPresented: $showLogoutDialog,
+                titleVisibility: .visible
+            ) {
+                Button("Log Out", role: .destructive) {
+                    Task { await viewModel.logout() }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("You are logged in to ZLibrary.")
+            }
+            .alert("Login Failed", isPresented: Binding(
                 get: { viewModel.errorMessage != nil },
                 set: { if !$0 { viewModel.errorMessage = nil } }
             )) {
                 Button("OK", role: .cancel) { viewModel.errorMessage = nil }
             } message: {
-                Text(viewModel.errorMessage ?? "")
+                Text(viewModel.errorMessage ?? String(localized: "Unknown error"))
             }
         }
     }
-
 }
 
-private struct ZLibraryDownloadSheet: View {
-    let status: ZLibraryViewModel.DownloadStatus
-    let progress: Double
-    let onDismiss: () -> Void
+private struct ZLibraryWebLoginSheet: View {
+    @ObservedObject var viewModel: ZLibraryViewModel
+    @Binding var isPresented: Bool
+    @Environment(\.dismiss) private var dismiss
+    @State private var showSuccessOverlay = false
+
+    private let loginURL = URL(string: "https://z-lib.pub/login")!
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-
-            VStack(spacing: 20) {
-                iconView
-                    .frame(width: 64, height: 64)
-                    .background(iconBackground, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .contentTransition(.opacity)
-                    .animation(.snappy, value: status)
-
-                VStack(spacing: 6) {
-                    Text(title)
-                        .font(.title2.bold())
-                        .contentTransition(.numericText())
-                        .animation(.snappy, value: status)
-
-                    Text(message)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
-                        .multilineTextAlignment(.center)
-                        .contentTransition(.numericText())
-                        .animation(.snappy, value: message)
-                }
-
-                if showsProgress {
-                    VStack(spacing: 8) {
-                        ProgressView(value: progress)
-                            .progressViewStyle(.linear)
-                            .tint(.accentColor)
-                            .frame(width: 220)
-
-                        Text("\(Int(progress * 100))%")
-                            .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(.secondary)
-                            .contentTransition(.numericText())
-                            .animation(.snappy, value: progress)
+        NavigationStack {
+            ZLibraryWebLoginView(
+                loginURL: loginURL,
+                onCookiesExtracted: { cookies in
+                    Task {
+                        await viewModel.restoreSession(cookies: cookies)
+                        if viewModel.isLoggedIn {
+                            // Show a brief success overlay before dismissing,
+                            // so the sheet doesn't vanish instantly.
+                            withAnimation(.snappy(duration: 0.3)) {
+                                showSuccessOverlay = true
+                            }
+                            try? await Task.sleep(nanoseconds: 900_000_000)
+                            dismiss()
+                        }
                     }
-                    .padding(.top, 8)
+                },
+                onError: { error in
+                    viewModel.errorMessage = error
                 }
-
-                actionButton
-                    .padding(.top, 28)
+            )
+            .ignoresSafeArea(edges: .bottom)
+            .overlay {
+                if showSuccessOverlay {
+                    ZLibraryLoginSuccessOverlay()
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                }
             }
-            .padding(.horizontal, 32)
-            .frame(maxWidth: .infinity)
-
-            Spacer()
-
-            // Extra bottom breathing room above the home indicator
-            Color.clear
-                .frame(height: 8)
+            .navigationTitle("Log In")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .opacity(showSuccessOverlay ? 0 : 1)
+                    .disabled(showSuccessOverlay)
+                }
+            }
         }
     }
+}
 
-    private var canDismiss: Bool {
-        if case .success = status { return true }
-        if case .failed = status { return true }
-        return false
-    }
+private struct ZLibraryLoginSuccessOverlay: View {
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
 
-    private var showsProgress: Bool {
-        if case .downloading = status { return true }
-        if case .importing = status { return true }
-        return false
-    }
+            VStack(spacing: 16) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 56))
+                    .foregroundStyle(.green)
+                    .symbolEffect(.bounce, value: true)
 
-    private var title: String {
-        switch status {
-        case .downloading: "Downloading"
-        case .importing: "Adding to Library"
-        case .success: "Added to Library"
-        case .failed: "Download Failed"
-        }
-    }
-
-    private var message: String {
-        switch status {
-        case .downloading(let t), .importing(let t), .success(let t):
-            t
-        case .failed(let msg):
-            msg
-        }
-    }
-
-    @ViewBuilder
-    private var iconView: some View {
-        switch status {
-        case .downloading:
-            Image(systemName: "arrow.down")
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(.tint)
-        case .importing:
-            Image(systemName: "books.vertical")
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(.tint)
-        case .success:
-            Image(systemName: "checkmark")
-                .font(.system(size: 28, weight: .bold))
-                .foregroundStyle(.green)
-        case .failed:
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 28, weight: .semibold))
-                .foregroundStyle(.red)
-        }
-    }
-
-    private var iconBackground: some ShapeStyle {
-        switch status {
-        case .success:
-            return AnyShapeStyle(.green.opacity(0.14))
-        case .failed:
-            return AnyShapeStyle(.red.opacity(0.14))
-        default:
-            return AnyShapeStyle(.tint.opacity(0.14))
-        }
-    }
-
-    @ViewBuilder
-    private var actionButton: some View {
-        switch status {
-        case .success:
-            Button {
-                onDismiss()
-            } label: {
-                Text("Done")
+                Text("Logged In")
                     .font(.headline)
-                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(.white)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-        case .failed:
-            Button {
-                onDismiss()
-            } label: {
-                Text("OK")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
+            .padding(32)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        }
+    }
+}
+
+private struct ZLibrarySignedOutView: View {
+    var body: some View {
+        ContentUnavailableView {
+            Label("Not Connected", systemImage: "person.crop.circle.badge.questionmark")
+        } description: {
+            Text("Log in to your ZLibrary account to search and download books.")
+        }
+    }
+}
+
+private struct ZLibraryLoggedInView: View {
+    @ObservedObject var viewModel: ZLibraryViewModel
+
+    var body: some View {
+        ContentUnavailableView {
+            Label("Connected", systemImage: "checkmark.seal.fill")
+        } description: {
+            if let name = viewModel.profile?.displayName, !name.isEmpty {
+                Text(name)
+            } else {
+                Text("You are logged in to ZLibrary.")
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.red)
-            .controlSize(.large)
-        default:
+        }
+    }
+}
+
+private struct ZLibraryLoadingView: View {
+    var body: some View {
+        VStack(spacing: 16) {
             ProgressView()
-                .scaleEffect(1.1)
-                .tint(.secondary)
+                .scaleEffect(1.3)
+            Text("Logging in…")
+                .font(.headline)
+                .foregroundStyle(.secondary)
         }
     }
 }

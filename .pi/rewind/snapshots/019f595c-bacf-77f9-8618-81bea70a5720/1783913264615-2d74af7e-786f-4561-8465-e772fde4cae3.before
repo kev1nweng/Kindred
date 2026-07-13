@@ -1,0 +1,43 @@
+import Foundation
+import SwiftUI
+
+/// SwiftUI-facing wrapper for the `ZLibraryClient` actor.
+/// Bridges the actor's async API into `@Published` state for reactive UI.
+@MainActor
+final class ZLibraryViewModel: ObservableObject {
+    @Published private(set) var isLoggedIn = false
+    @Published private(set) var isLoggingIn = false
+    @Published private(set) var profile: ZLibraryProfileInfo?
+    @Published var errorMessage: String?
+
+    private let client: ZLibraryClient
+
+    init(client: ZLibraryClient = ZLibraryClient()) {
+        self.client = client
+    }
+
+    func login(email: String, password: String) async {
+        isLoggingIn = true
+        errorMessage = nil
+
+        do {
+            let info = try await client.login(email: email, password: password)
+            withAnimation(.snappy) {
+                profile = info
+                isLoggedIn = true
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isLoggingIn = false
+    }
+
+    func logout() async {
+        await client.logout()
+        withAnimation(.snappy) {
+            profile = nil
+            isLoggedIn = false
+        }
+    }
+}

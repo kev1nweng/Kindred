@@ -1,0 +1,395 @@
+import Foundation
+
+/// Async ZLibrary API client.
+///
+/// Ported from sertraline/zlibrary (Python) to Swift.
+/// Handles authentication, search, book details, and downloads
+/// via cookie-based HTTP sessions.
+///
+/// Usage:
+/// ```swift
+/// let client = ZLibraryClient()
+/// try await client.login(email: "...", password: "...")
+/// let results = try await client.search(query: "biology")
+/// let detail = try await client.bookDetails(id: results.books[0].id)
+/// let fileURL = try await client.download(detail: detail, to: tempDir)
+/// ```
+actor ZLibraryClient {
+
+    // MARK: - Configuration
+
+    /// Default ZLibrary mirror (Hydra clearnet).
+    static let defaultMirror = URL(string: "https://z-library.sk")!
+
+    private let mirror: URL
+    private let loginEndpoint: URL
+
+    /// Shared URL session with custom cookie storage for auth.
+    private let session: URLSession
+    private let cookieStorage: HTTPCookieStorage
+
+    /// Whether the client is authenticated.
+    private(set) var isLoggedIn = false
+
+    /// User profile info after login.
+    private(set) var profile: ZLibraryProfileInfo?
+
+    // MARK: - Init
+
+    init(mirror: URL = ZLibraryClient.defaultMirror) {
+        self.mirror = mirror
+        self.loginEndpoint = mirror.appendingPathComponent("rpc.php")
+
+        // Dedicated cookie storage so ZLibrary cookies don't leak
+        // into the app's other networking (e.g. HTTPBookServer).
+        let storage = HTTPCookieStorage()
+        storage.cookieAcceptPolicy = .always
+
+        let config = URLSessionConfiguration.default
+        config.httpCookieStorage = storage
+        config.httpShouldSetCookies = true
+        config.httpCookieAcceptPolicy = .always
+        config.timeoutIntervalForRequest = 30
+        config.timeoutIntervalForResource = 180
+
+        self.cookieStorage = storage
+        self.session = URLSession(configuration: config)
+    }
+
+    // MARK: - Login
+
+    /// Authenticate with ZLibrary using email and password.
+    /// Stores session cookies for subsequent requests.
+    @discardableResult
+    func login(email: String, password: String) async throws -> ZLibraryProfileInfo {
+        var request = URLRequest(url: loginEndpoint)
+        request.httpMethod = "POST"
+        request.setValue(
+            "application/x-www-form-urlencoded",
+            forHTTPHeaderField: "Content-Type"
+        )
+
+        let params: [String: String] = [
+            "isModal": "True",
+            "email": email,
+            "password": password,
+            "site_mode": "books",
+            "action": "login",
+            "isSingleLogin": "1",
+            "redirectUrl": "",
+            "gg_json_mode": "1"
+        ]
+
+        request.httpBody = params
+            .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")" }
+            .joined(separator: "&")
+            .data(using: .utf8)
+
+        let (data, response) = try await sendRequest(request)
+
+        guard let http = response as? HTTPURLResponse,
+              (200..<300).contains(http.statusCode) else {
+            throw ZLibraryError.invalidResponse
+        }
+
+        // Parse JSON response
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let resp = json["response"] as? [String: Any] else {
+            throw ZLibraryError.parseError("Login response is not valid JSON")
+        }
+
+        // Check for validation error
+        if resp["validationError"] != nil {
+            let detail = (resp["errors"] as? [String: Any])
+                .map { String(describing: $0) } ?? "Unknown validation error"
+            throw ZLibraryError.loginFailed(detail)
+        }
+
+        // Extract user info from response
+        let userId = resp["userId"] as? String ?? ""
+        let userKey = resp["userKey"] as? String ?? ""
+        let displayName = resp["name"] as? String ?? email
+
+        // Store cookies manually if the server doesn't set them via Set-Cookie
+        let storedCookies = cookieStorage.cookies(for: mirror) ?? []
+        let hasRemixCookies = storedCookies.contains { $0.name.hasPrefix("remix") }
+
+        if !hasRemixCookies && !userId.isEmpty && !userKey.isEmpty {
+            // Manually create cookies since the RPC endpoint may not set them
+            let domain = mirror.host ?? ""
+            let userCookie = HTTPCookie(
+                properties: [
+                    .name: "remix_userid",
+                    .value: userId,
+                    .domain: domain,
+                    .path: "/",
+                    .version: 0
+                ]
+            )!
+            let keyCookie = HTTPCookie(
+                properties: [
+                    .name: "remix_userkey",
+                    .value: userKey,
+                    .domain: domain,
+                    .path: "/",
+                    .version: 0
+                ]
+            )!
+            cookieStorage.setCookie(userCookie)
+            cookieStorage.setCookie(keyCookie)
+        }
+
+        isLoggedIn = true
+        let info = ZLibraryProfileInfo(
+            userId: userId,
+            userKey: userKey,
+            displayName: displayName
+        )
+        profile = info
+        return info
+    }
+
+    /// Logout and clear all session cookies.
+    func logout() {
+        if let cookies = cookieStorage.cookies(for: mirror) {
+            for cookie in cookies {
+                cookieStorage.deleteCookie(cookie)
+            }
+        }
+        isLoggedIn = false
+        profile = nil
+    }
+
+    // MARK: - Search
+
+    /// Search for books by query with optional filters.
+    /// Returns paginated results for the specified page (1-based).
+    func search(
+        query: String,
+        filters: ZLibrarySearchFilters = .defaultFilters,
+        page: Int = 1
+    ) async throws -> ZLibrarySearchResult {
+        guard isLoggedIn else { throw ZLibraryError.notLoggedIn }
+        guard !query.isEmpty else { throw ZLibraryError.emptyQuery }
+
+        var components = URLComponents()
+        components.scheme = mirror.scheme
+        components.host = mirror.host
+        components.path = "/s/\(query.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? query)"
+        components.queryItems = buildQueryItems(filters: filters, page: page)
+
+        guard let url = components.url else {
+            throw ZLibraryError.parseError("Could not construct search URL")
+        }
+
+        let html = try await fetchHTML(url: url)
+        let (books, totalPages) = try ZLibraryHTMLParser.parseSearchPage(html, mirror: mirror.absoluteString)
+
+        return ZLibrarySearchResult(
+            books: books,
+            page: page,
+            totalPages: max(totalPages, 1)
+        )
+    }
+
+    /// Full-text search within book contents.
+    func fullTextSearch(
+        query: String,
+        mode: ZLibraryFullTextMode,
+        filters: ZLibrarySearchFilters = .defaultFilters,
+        page: Int = 1
+    ) async throws -> ZLibrarySearchResult {
+        guard isLoggedIn else { throw ZLibraryError.notLoggedIn }
+        guard !query.isEmpty else { throw ZLibraryError.emptyQuery }
+
+        // Phrase search requires at least 2 words
+        if mode == .phrase {
+            let words = query.split(separator: " ")
+            guard words.count >= 2 else {
+                throw ZLibraryError.parseError(
+                    "At least 2 words must be provided for phrase search. Use .words mode for a single word."
+                )
+            }
+        }
+
+        var components = URLComponents()
+        components.scheme = mirror.scheme
+        components.host = mirror.host
+        components.path = "/fulltext/\(query.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? query)"
+
+        var queryItems = buildQueryItems(filters: filters, page: page)
+        queryItems.append(URLQueryItem(name: "type", value: mode == .phrase ? "phrase" : "words"))
+        components.queryItems = queryItems
+
+        guard let url = components.url else {
+            throw ZLibraryError.parseError("Could not construct full-text search URL")
+        }
+
+        let html = try await fetchHTML(url: url)
+        let (books, totalPages) = try ZLibraryHTMLParser.parseSearchPage(html, mirror: mirror.absoluteString)
+
+        return ZLibrarySearchResult(
+            books: books,
+            page: page,
+            totalPages: max(totalPages, 1)
+        )
+    }
+
+    // MARK: - Book Details
+
+    /// Fetch detailed info for a specific book by ID.
+    func bookDetails(id: String) async throws -> ZLibraryBookDetail {
+        guard isLoggedIn else { throw ZLibraryError.notLoggedIn }
+
+        let url = mirror.appendingPathComponent("book/\(id)")
+        let html = try await fetchHTML(url: url)
+        return try ZLibraryHTMLParser.parseBookDetail(html, mirror: mirror.absoluteString)
+    }
+
+    /// Fetch details for a book from its search result entry.
+    func bookDetails(for book: ZLibraryBook) async throws -> ZLibraryBookDetail {
+        guard !book.url.isEmpty else {
+            throw ZLibraryError.bookNotFound(book.id)
+        }
+        guard let url = URL(string: book.url) else {
+            throw ZLibraryError.parseError("Invalid book URL: \(book.url)")
+        }
+        let html = try await fetchHTML(url: url)
+        return try ZLibraryHTMLParser.parseBookDetail(html, mirror: mirror.absoluteString)
+    }
+
+    // MARK: - Download
+
+    /// Download a book file to a specified directory.
+    /// Returns the local file URL of the downloaded book.
+    /// Progress callback is called on the main actor.
+    func download(
+        detail: ZLibraryBookDetail,
+        to directory: URL,
+        progress: (@Sendable (Double) -> Void)? = nil
+    ) async throws -> URL {
+        guard isLoggedIn else { throw ZLibraryError.notLoggedIn }
+        guard let downloadURLString = detail.downloadURL else {
+            throw ZLibraryError.downloadUnavailable
+        }
+        guard let downloadURL = URL(string: downloadURLString) else {
+            throw ZLibraryError.parseError("Invalid download URL: \(downloadURLString)")
+        }
+
+        // Determine file extension from book format
+        let ext = detail.fileExtension.lowercased()
+        guard !ext.isEmpty else { throw ZLibraryError.unsupportedFormat("unknown") }
+
+        // Create destination directory if needed
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+
+        // Build a clean filename
+        let safeName = detail.name
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: ":", with: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let filename = "\(safeName).\(ext)"
+        let destination = directory.appendingPathComponent(filename)
+
+        // Use URLSession download for memory-efficient file download.
+        // URLSession.download writes to a temporary file on disk, avoiding
+        // loading the entire book into memory.
+        let request = buildRequest(url: downloadURL)
+        let (tempURL, response) = try await session.download(for: request)
+
+        guard let http = response as? HTTPURLResponse,
+              (200..<300).contains(http.statusCode) else {
+            let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+            try? FileManager.default.removeItem(at: tempURL)
+            throw ZLibraryError.parseError("Download failed with HTTP \(code)")
+        }
+
+        // Move the downloaded temp file to the final destination
+        if FileManager.default.fileExists(atPath: destination.path) {
+            try FileManager.default.removeItem(at: destination)
+        }
+        try FileManager.default.moveItem(at: tempURL, to: destination)
+
+        progress?(1.0)
+        return destination
+    }
+
+    // MARK: - Download Limits
+
+    /// Get current daily download limits.
+    func getDownloadLimits() async throws -> ZLibraryDownloadLimits {
+        guard isLoggedIn else { throw ZLibraryError.notLoggedIn }
+        let url = mirror.appendingPathComponent("users/downloads")
+        let html = try await fetchHTML(url: url)
+        return try ZLibraryHTMLParser.parseDownloadLimits(html)
+    }
+
+    // MARK: - Private Helpers
+
+    private func buildQueryItems(filters: ZLibrarySearchFilters, page: Int) -> [URLQueryItem] {
+        var items: [URLQueryItem] = []
+
+        if filters.exact {
+            items.append(URLQueryItem(name: "e", value: "1"))
+        }
+        if let from = filters.fromYear {
+            items.append(URLQueryItem(name: "yearFrom", value: String(from)))
+        }
+        if let to = filters.toYear {
+            items.append(URLQueryItem(name: "yearTo", value: String(to)))
+        }
+        for lang in filters.languages {
+            items.append(URLQueryItem(name: "languages[]", value: lang))
+        }
+        for ext in filters.extensions {
+            items.append(URLQueryItem(name: "extensions[]", value: ext))
+        }
+        items.append(URLQueryItem(name: "page", value: String(page)))
+
+        return items
+    }
+
+    private func buildRequest(url: URL) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.setValue(
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+            forHTTPHeaderField: "User-Agent"
+        )
+        return request
+    }
+
+    private func fetchHTML(url: URL) async throws -> String {
+        let request = buildRequest(url: url)
+        let (data, response) = try await sendRequest(request)
+
+        guard let http = response as? HTTPURLResponse else {
+            throw ZLibraryError.invalidResponse
+        }
+
+        guard (200..<300).contains(http.statusCode) else {
+            throw ZLibraryError.parseError("HTTP \(http.statusCode) from \(url.path)")
+        }
+
+        guard let html = String(data: data, encoding: .utf8) else {
+            throw ZLibraryError.parseError("Response is not valid UTF-8")
+        }
+
+        return html
+    }
+
+    private func sendRequest(_ request: URLRequest) async throws -> (Data, URLResponse) {
+        do {
+            return try await session.data(for: request)
+        } catch {
+            throw ZLibraryError.networkError(error)
+        }
+    }
+}
+
+// MARK: - Profile Info
+
+struct ZLibraryProfileInfo: Sendable {
+    let userId: String
+    let userKey: String
+    let displayName: String
+}

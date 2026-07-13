@@ -1,0 +1,146 @@
+import SwiftUI
+import WebKit
+import os
+
+/// Full-screen ZLibrary browser using WKWebView.
+///
+/// Everything happens inside WebKit: login, search, browsing, downloading.
+/// Cloudflare's JavaScript challenge is handled natively by the browser engine.
+/// File downloads are intercepted via `WKDownloadDelegate` and imported
+/// directly into the Kindred library.
+struct ZLibraryBrowserView: UIViewRepresentable {
+    let startURL: URL
+    let onDownloadComplete: (URL, String) -> Void
+    let onLoginStateChanged: (Bool) -> Void
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        // Persistent store — login session survives app restarts.
+        config.websiteDataStore = WKWebsiteDataStore.default()
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = context.coordinator
+        webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+        webView.allowsBackForwardNavigationGestures = true
+        webView.load(URLRequest(url: startURL))
+        return webView
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    // MARK: - Coordinator
+
+    final class Coordinator: NSObject, WKNavigationDelegate, WKDownloadDelegate {
+        let parent: ZLibraryBrowserView
+        private let logger = Logger(
+            subsystem: "space.kev1nweng.kindred",
+            category: "ZLibraryBrowser"
+        )
+
+        init(parent: ZLibraryBrowserView) {
+            self.parent = parent
+        }
+
+        // MARK: - Navigation
+
+        func webView(_ webView: WKWebView,
+                     didFinish navigation: WKNavigation!) {
+            let url = webView.url?.absoluteString ?? "nil"
+            logger.info("didFinish: \(url, privacy: .public)")
+            checkLoginState(in: webView)
+        }
+
+        func webView(_ webView: WKWebView,
+                     didStartProvisionalNavigation navigation: WKNavigation!) {
+            checkLoginState(in: webView)
+        }
+
+        // Detect download responses and convert them to WKDownloads
+        func webView(_ webView: WKWebView,
+                     decidePolicyFor navigationResponse: WKNavigationResponse,
+                     decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+            let url = navigationResponse.response.url?.absoluteString ?? ""
+            let isDownload = url.contains("/dl/")
+
+            if isDownload {
+                logger.info("download response detected: \(url, privacy: .public)")
+                decisionHandler(.download)
+            } else {
+                decisionHandler(.allow)
+            }
+        }
+
+        // Called when a navigation becomes a download
+        func webView(_ webView: WKWebView,
+                     navigationAction: WKNavigationAction,
+                     didBecome download: WKDownload) {
+            download.delegate = self
+            logger.info("navigation became download")
+        }
+
+        // MARK: - WKDownloadDelegate (required)
+
+        // Provide a destination file URL for the download
+        func download(_ download: WKDownload,
+                      decideDestinationUsing response: URLResponse,
+                      suggestedFilename filename: String,
+                      completionHandler: @escaping (URL?) -> Void) {
+            let tempDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ZLibraryDownloads", isDirectory: true)
+            try? FileManager.default.createDirectory(
+                at: tempDir, withIntermediateDirectories: true)
+
+            let dest = tempDir.appendingPathComponent(filename)
+            // Remove if exists (shouldn't, but just in case)
+            try? FileManager.default.removeItem(at: dest)
+
+            logger.info("download destination: \(filename, privacy: .public)")
+            completionHandler(dest)
+        }
+
+        func downloadDidFinish(_ download: WKDownload) {
+            logger.info("download finished")
+            // The destination URL was set in decideDestinationUsing.
+            // We need to find the file in our temp directory.
+            let tempDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ZLibraryDownloads", isDirectory: true)
+
+            guard let files = try? FileManager.default.contentsOfDirectory(
+                at: tempDir, includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            ), let file = files.last else {
+                logger.error("download finished but no file found")
+                return
+            }
+
+            let title = (file.lastPathComponent as NSString).deletingPathExtension
+            logger.info("download file: \(file.lastPathComponent, privacy: .public)")
+
+            DispatchQueue.main.async {
+                self.parent.onDownloadComplete(file, title)
+            }
+        }
+
+        func download(_ download: WKDownload,
+                      didFailWithError error: Error,
+                      resumeData: Data?) {
+            logger.error("download failed: \(error.localizedDescription, privacy: .public)")
+        }
+
+        // MARK: - Login state detection
+
+        private func checkLoginState(in webView: WKWebView) {
+            let store = webView.configuration.websiteDataStore.httpCookieStore
+            store.getAllCookies { [weak self] cookies in
+                let loggedIn = cookies.contains { $0.name == "remix_userid" }
+                DispatchQueue.main.async {
+                    self?.parent.onLoginStateChanged(loggedIn)
+                }
+            }
+        }
+    }
+}

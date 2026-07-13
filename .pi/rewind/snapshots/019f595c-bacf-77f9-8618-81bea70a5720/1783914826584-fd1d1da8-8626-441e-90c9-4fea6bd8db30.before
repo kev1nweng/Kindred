@@ -1,0 +1,162 @@
+import SwiftUI
+import WebKit
+import os
+
+/// Full-screen ZLibrary browser using WKWebView.
+///
+/// Everything happens inside WebKit: login, search, browsing, downloading.
+/// Cloudflare's JavaScript challenge is handled natively by the browser engine.
+/// File downloads are intercepted via `WKDownloadDelegate` and imported
+/// directly into the Kindred library.
+struct ZLibraryBrowserView: UIViewRepresentable {
+    let startURL: URL
+    let onDownloadComplete: (URL, String) -> Void
+    let onLoginStateChanged: (Bool) -> Void
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        // Persistent store — login session survives app restarts.
+        config.websiteDataStore = WKWebsiteDataStore.default()
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = context.coordinator
+        #if os(iOS)
+        webView.uiDelegate = context.coordinator
+        #endif
+        webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+        webView.allowsBackForwardNavigationGestures = true
+        webView.load(URLRequest(url: startURL))
+        return webView
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    // MARK: - Coordinator
+
+    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKDownloadDelegate {
+        let parent: ZLibraryBrowserView
+        private let logger = Logger(
+            subsystem: "space.kev1nweng.kindred",
+            category: "ZLibraryBrowser"
+        )
+        private var downloadDestinationURL: URL?
+
+        init(parent: ZLibraryBrowserView) {
+            self.parent = parent
+        }
+
+        // MARK: - Navigation
+
+        func webView(_ webView: WKWebView,
+                     didFinish navigation: WKNavigation!) {
+            let url = webView.url?.absoluteString ?? "nil"
+            logger.info("didFinish: \(url, privacy: .public)")
+            checkLoginState(in: webView)
+        }
+
+        func webView(_ webView: WKWebView,
+                     didStartProvisionalNavigation navigation: WKNavigation!) {
+            checkLoginState(in: webView)
+        }
+
+        // MARK: - Download interception
+
+        // iOS 14.5+: WKWebView calls this when the server sends a downloadable
+        // response (e.g. Content-Disposition: attachment).
+        func webView(_ webView: WKWebView,
+                     navigationAction: WKNavigationAction,
+                     didBecome download: WKDownload) {
+            download.delegate = self
+        }
+
+        func download(_ download: WKDownload,
+                      decidePolicyUsing response: URLResponse,
+                      completionHandler: @escaping (WKDownload.ResponsePolicy) -> Void) {
+            // Create a temp file for the download
+            let tempDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ZLibraryDownloads", isDirectory: true)
+            try? FileManager.default.createDirectory(
+                at: tempDir, withIntermediateDirectories: true)
+
+            let suggestedName = (response as? HTTPURLResponse)?
+                .value(forHTTPHeaderField: "Content-Disposition")?
+                .components(separatedBy: "filename=")
+                .last?
+                .trimmingCharacters(in: CharacterSet(charactersIn: "\" ")) ?? "book"
+
+            let dest = tempDir.appendingPathComponent(suggestedName)
+            downloadDestinationURL = dest
+            logger.info("download starting: \(suggestedName, privacy: .public)")
+            completionHandler(.allow)
+        }
+
+        func download(_ download: WKDownload,
+                      didReceive response: URLResponse) {
+            // Called when the download response is received
+        }
+
+        func download(_ download: WKDownload,
+                      willSendRedirect response: URLResponse) async -> WKDownload.RedirectPolicy {
+            .allow
+        }
+
+        func download(_ download: WKDownload,
+                      didCreateDestinationURL url: URL) {
+            downloadDestinationURL = url
+            logger.info("download destination: \(url.lastPathComponent, privacy: .public)")
+        }
+
+        func downloadDidFinish(_ download: WKDownload) {
+            guard let dest = downloadDestinationURL else {
+                logger.error("download finished but no destination URL")
+                return
+            }
+            let filename = dest.lastPathComponent
+            logger.info("download finished: \(filename, privacy: .public)")
+
+            // Extract a clean title from the filename
+            let title = (filename as NSString).deletingPathExtension
+
+            DispatchQueue.main.async {
+                self.parent.onDownloadComplete(dest, title)
+            }
+        }
+
+        func download(_ download: WKDownload,
+                      didFailWithError error: Error,
+                      resumeData: Data?) {
+            logger.error("download failed: \(error.localizedDescription, privacy: .public)")
+        }
+
+        // MARK: - Login state detection
+
+        private func checkLoginState(in webView: WKWebView) {
+            let store = webView.configuration.websiteDataStore.httpCookieStore
+            store.getAllCookies { [weak self] cookies in
+                let loggedIn = cookies.contains { $0.name == "remix_userid" }
+                DispatchQueue.main.async {
+                    self?.parent.onLoginStateChanged(loggedIn)
+                }
+            }
+        }
+
+        // MARK: - Open external links in Safari
+
+        func webView(_ webView: WKWebView,
+                     createWebViewWith configuration: WKWebViewConfiguration,
+                     for navigationAction: WKNavigationAction,
+                     windowFeatures: WKWindowFeatures) -> WKWebView? {
+            // Open popups / external links in the system browser
+            if let url = navigationAction.request.url {
+                #if os(iOS)
+                UIApplication.shared.open(url)
+                #endif
+            }
+            return nil
+        }
+    }
+}

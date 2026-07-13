@@ -1,0 +1,212 @@
+import Foundation
+import SwiftUI
+import WebKit
+
+/// SwiftUI-facing wrapper for the `ZLibraryClient` actor.
+/// Bridges the actor's async API into `@Published` state for reactive UI.
+@MainActor
+final class ZLibraryViewModel: ObservableObject {
+    // Auth state
+    @Published private(set) var isLoggedIn = false
+    @Published private(set) var isLoggingIn = false
+    @Published private(set) var profile: ZLibraryProfileInfo?
+    @Published var errorMessage: String?
+
+    // Search state
+    @Published private(set) var searchResults: [ZLibraryBook] = []
+    @Published private(set) var isSearching = false
+    @Published private(set) var currentPage = 0
+    @Published private(set) var totalPages = 0
+    @Published private(set) var lastQuery = ""
+
+    // Book detail state
+    @Published private(set) var detailCache: [String: ZLibraryBookDetail] = [:]
+    @Published private(set) var fetchingDetailFor: String? = nil
+
+    // Download state
+    @Published private(set) var downloadingBookId: String? = nil
+    @Published private(set) var downloadProgress: Double = 0
+    @Published private(set) var downloadMessage: String? = nil
+
+    private let client: ZLibraryClient
+
+    init(client: ZLibraryClient = ZLibraryClient()) {
+        self.client = client
+        Task { await syncFromClient() }
+    }
+
+    private func syncFromClient() async {
+        let loggedIn = await client.isLoggedIn
+        let info = await client.profile
+        if loggedIn {
+            withAnimation(.snappy) {
+                profile = info
+                isLoggedIn = true
+            }
+        }
+    }
+
+    // MARK: - Auth
+
+    func restoreSession(cookies: [HTTPCookie]) async {
+        isLoggingIn = true
+        errorMessage = nil
+
+        await client.restoreSession(cookies: cookies)
+
+        let hasRemixCookies = cookies.contains { $0.name.hasPrefix("remix") }
+        if hasRemixCookies {
+            await client.fetchProfileInfo()
+            let info = await client.profile
+            withAnimation(.snappy) {
+                profile = info
+                isLoggedIn = true
+            }
+        } else {
+            errorMessage = "Login did not produce valid session cookies."
+        }
+
+        isLoggingIn = false
+    }
+
+    func logout() async {
+        let store = WKWebsiteDataStore.default()
+        store.fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+            store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(),
+                             for: records) {}
+        }
+
+        await client.logout()
+        withAnimation(.snappy) {
+            profile = nil
+            isLoggedIn = false
+            searchResults = []
+            currentPage = 0
+            totalPages = 0
+            lastQuery = ""
+            detailCache = [:]
+        }
+    }
+
+    // MARK: - Search
+
+    func search(query: String) async {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            searchResults = []
+            currentPage = 0
+            totalPages = 0
+            lastQuery = ""
+            return
+        }
+
+        isSearching = true
+        errorMessage = nil
+
+        do {
+            let result = try await client.search(query: trimmed, page: 1)
+            withAnimation(.snappy) {
+                searchResults = result.books
+                currentPage = result.page
+                totalPages = result.totalPages
+                lastQuery = trimmed
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isSearching = false
+    }
+
+    func loadNextPage() async {
+        guard !lastQuery.isEmpty,
+              !isSearching,
+              currentPage < totalPages else { return }
+
+        isSearching = true
+
+        do {
+            let result = try await client.search(query: lastQuery, page: currentPage + 1)
+            withAnimation(.snappy) {
+                searchResults.append(contentsOf: result.books)
+                currentPage = result.page
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+
+        isSearching = false
+    }
+
+    var hasMorePages: Bool {
+        currentPage < totalPages && !lastQuery.isEmpty
+    }
+
+    // MARK: - Book Details
+
+    func fetchDetails(for book: ZLibraryBook) async -> ZLibraryBookDetail? {
+        if let cached = detailCache[book.id] {
+            return cached
+        }
+
+        fetchingDetailFor = book.id
+
+        do {
+            let detail = try await client.bookDetails(for: book)
+            detailCache[book.id] = detail
+            fetchingDetailFor = nil
+            return detail
+        } catch {
+            errorMessage = error.localizedDescription
+            fetchingDetailFor = nil
+            return nil
+        }
+    }
+
+    // MARK: - Download
+
+    func downloadBook(_ detail: ZLibraryBookDetail, into library: BookLibrary) async -> Bool {
+        downloadingBookId = detail.url
+        downloadProgress = 0
+        downloadMessage = "Downloading…"
+
+        do {
+            let tempDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ZLibraryDownloads", isDirectory: true)
+            try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+
+            let fileURL = try await client.download(
+                detail: detail,
+                to: tempDir,
+                progress: { [weak self] ratio in
+                    Task { @MainActor in
+                        self?.downloadProgress = ratio
+                    }
+                }
+            )
+
+            downloadMessage = "Importing to library…"
+
+            let title = detail.name.isEmpty ? nil : detail.name
+            library.importDownloadedBook(from: fileURL, preferredTitle: title)
+
+            // Clean up temp file
+            try? FileManager.default.removeItem(at: fileURL)
+
+            withAnimation(.snappy) {
+                downloadingBookId = nil
+                downloadProgress = 0
+                downloadMessage = nil
+            }
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            withAnimation(.snappy) {
+                downloadingBookId = nil
+                downloadProgress = 0
+                downloadMessage = nil
+            }
+            return false
+        }
+    }
+}

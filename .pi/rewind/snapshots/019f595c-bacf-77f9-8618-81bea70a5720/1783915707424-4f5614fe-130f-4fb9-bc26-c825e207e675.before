@@ -1,0 +1,275 @@
+import SwiftUI
+import WebKit
+import os
+
+/// Full-screen ZLibrary browser using WKWebView.
+///
+/// Everything happens inside WebKit: login, search, browsing.
+/// Cloudflare's JavaScript challenge is handled natively by the browser engine.
+/// Downloads are intercepted by detecting file responses in the navigation
+/// delegate, extracting the final CDN URL (with auth tokens), then using
+/// URLSession to download the file directly — avoiding WebKit's cross-site
+/// download process issues.
+struct ZLibraryBrowserView: UIViewRepresentable {
+    let startURL: URL
+    let onDownloadComplete: (URL, String) -> Void
+    var onLoadingStateChanged: (Bool) -> Void = { _ in }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.websiteDataStore = WKWebsiteDataStore.default()
+
+        let script = WKUserScript(
+            source: ZLibraryBrowserView.downloadInterceptorJS,
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: false
+        )
+        config.userContentController.addUserScript(script)
+        config.userContentController.add(context.coordinator, name: "downloadTriggered")
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = context.coordinator
+        webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+        webView.allowsBackForwardNavigationGestures = true
+        context.coordinator.webView = webView
+        webView.load(URLRequest(url: startURL))
+        return webView
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    // JavaScript injected on every page load to intercept download clicks.
+    static let downloadInterceptorJS = """
+    (function() {
+        function sendDownloadURL(url, filename) {
+            if (url && url.length > 0) {
+                window.webkit.messageHandlers.downloadTriggered.postMessage({
+                    url: url, filename: filename || ''
+                });
+            }
+        }
+        document.addEventListener('click', function(e) {
+            var el = e.target;
+            while (el && el !== document.body) {
+                if (el.tagName === 'A' && el.href) {
+                    var href = el.href;
+                    var cls = el.className || '';
+                    if (href.indexOf('/dl/') !== -1 ||
+                        cls.indexOf('addDownloadedBook') !== -1 ||
+                        cls.indexOf('downloadLink') !== -1 ||
+                        el.getAttribute('data-action') === 'download') {
+                        sendDownloadURL(href, el.getAttribute('download') || '');
+                    }
+                }
+                el = el.parentElement;
+            }
+        }, true);
+        var origOpen = window.open;
+        window.open = function(url) {
+            if (url && url.indexOf('/dl/') !== -1) {
+                sendDownloadURL(url, '');
+                return null;
+            }
+            return origOpen.apply(window, arguments);
+        };
+    })();
+    """
+
+    // MARK: - Coordinator
+
+    final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+        let parent: ZLibraryBrowserView
+        weak var webView: WKWebView?
+        private let logger = Logger(
+            subsystem: "space.kev1nweng.kindred",
+            category: "ZLibraryBrowser"
+        )
+
+        /// Tracks whether we're currently loading a download URL in the WebView
+        /// to follow redirects through Cloudflare to the CDN.
+        private var isDownloadNavigation = false
+
+        init(parent: ZLibraryBrowserView) {
+            self.parent = parent
+        }
+
+        // MARK: - Script message handler
+
+        func userContentController(_ userContentController: WKUserContentController,
+                                   didReceive message: WKScriptMessage) {
+            if message.name == "downloadTriggered",
+               let body = message.body as? [String: String],
+               let urlString = body["url"] {
+                logger.info("JS download triggered: \(urlString, privacy: .public)")
+                // Load the download URL in the main WebView to follow
+                // redirects through Cloudflare. When the final CDN response
+                // arrives, decidePolicyFor navigationResponse will catch it.
+                isDownloadNavigation = true
+                if let url = URL(string: urlString) {
+                    webView?.load(URLRequest(url: url))
+                }
+            }
+        }
+
+        // MARK: - Navigation
+
+        func webView(_ webView: WKWebView,
+                     didStartProvisionalNavigation navigation: WKNavigation!) {
+            DispatchQueue.main.async { self.parent.onLoadingStateChanged(true) }
+        }
+
+        func webView(_ webView: WKWebView,
+                     didFinish navigation: WKNavigation!) {
+            let url = webView.url?.absoluteString ?? "nil"
+            logger.info("didFinish: \(url, privacy: .public)")
+            webView.evaluateJavaScript(ZLibraryBrowserView.downloadInterceptorJS)
+            DispatchQueue.main.async { self.parent.onLoadingStateChanged(false) }
+        }
+
+        func webView(_ webView: WKWebView,
+                     didFailProvisionalNavigation navigation: WKNavigation!,
+                     withError error: Error) {
+            // If a download navigation "fails", it might actually be fine —
+            // the file response was intercepted in decidePolicyFor.
+            if isDownloadNavigation {
+                logger.info("download navigation ended (expected after cancel)")
+                isDownloadNavigation = false
+                // Go back to the page the user was on
+                webView.goBack()
+            }
+            DispatchQueue.main.async { self.parent.onLoadingStateChanged(false) }
+        }
+
+        func webView(_ webView: WKWebView,
+                     didFail navigation: WKNavigation!,
+                     withError error: Error) {
+            DispatchQueue.main.async { self.parent.onLoadingStateChanged(false) }
+        }
+
+        // This is the key method: detect file responses and extract the URL.
+        func webView(_ webView: WKWebView,
+                     decidePolicyFor navigationResponse: WKNavigationResponse,
+                     decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+            let response = navigationResponse.response
+            let url = response.url?.absoluteString ?? ""
+            let mimeType = response.mimeType ?? ""
+            let contentDisposition = (response as? HTTPURLResponse)?
+                .value(forHTTPHeaderField: "Content-Disposition") ?? ""
+
+            let isDownloadURL = url.contains("/dl/")
+            let hasAttachment = contentDisposition.lowercased().contains("attachment")
+            let isFileResponse = !mimeType.isEmpty &&
+                !mimeType.contains("text/html") &&
+                !mimeType.contains("text/css") &&
+                !mimeType.contains("javascript") &&
+                !mimeType.contains("image/") &&
+                !mimeType.contains("font")
+
+            if isDownloadURL || hasAttachment || (isFileResponse && navigationResponse.isForMainFrame) {
+                logger.info("file response detected: url=\(url, privacy: .public) mime=\(mimeType, privacy: .public)")
+
+                // Extract filename from Content-Disposition or URL
+                var filename = ""
+                if let idx = contentDisposition.range(of: "filename=", options: .caseInsensitive) {
+                    filename = String(contentDisposition[idx.upperBound...])
+                        .trimmingCharacters(in: CharacterSet(charactersIn: "\" "))
+                        .removingPercentEncoding ?? filename
+                }
+                if filename.isEmpty {
+                    filename = response.suggestedFilename ?? ""
+                }
+                if filename.isEmpty, let u = response.url {
+                    filename = u.lastPathComponent.removingPercentEncoding ?? u.lastPathComponent
+                }
+
+                // Cancel the WebView navigation — the current page stays as-is.
+                // Then download the file using URLSession directly.
+                // The CDN URL already contains auth tokens (md5, expires),
+                // so no cookies are needed for the actual file download.
+                isDownloadNavigation = false
+                decisionHandler(.cancel)
+
+                if let fileURL = response.url {
+                    downloadWithURLSession(url: fileURL, filename: filename, from: webView)
+                }
+            } else {
+                decisionHandler(.allow)
+            }
+        }
+
+        // MARK: - URLSession download
+
+        private func downloadWithURLSession(url: URL, filename: String, from webView: WKWebView) {
+            logger.info("starting URLSession download: \(filename, privacy: .public)")
+
+            // Copy cookies from the WebView's data store to the URLSession
+            // in case the CDN requires them (some CDNs check session cookies).
+            let dataStore = webView.configuration.websiteDataStore
+            dataStore.httpCookieStore.getAllCookies { [weak self] cookies in
+                guard let self else { return }
+
+                let config = URLSessionConfiguration.default
+                config.timeoutIntervalForRequest = 60
+                config.timeoutIntervalForResource = 300
+
+                // Set cookies on the session
+                let cookieStorage = HTTPCookieStorage.shared
+                for cookie in cookies {
+                    cookieStorage.setCookie(cookie)
+                }
+
+                let session = URLSession(configuration: config)
+                var request = URLRequest(url: url)
+                request.setValue(
+                    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",
+                    forHTTPHeaderField: "User-Agent"
+                )
+                request.setValue(url.host ?? "", forHTTPHeaderField: "Referer")
+
+                let task = session.downloadTask(with: request) { tempURL, response, error in
+                    if let error = error {
+                        self.logger.error("URLSession download failed: \(error.localizedDescription, privacy: .public)")
+                        return
+                    }
+
+                    guard let tempURL = tempURL else {
+                        self.logger.error("URLSession download: no temp file")
+                        return
+                    }
+
+                    // Move to our own temp directory
+                    let destDir = FileManager.default.temporaryDirectory
+                        .appendingPathComponent("ZLibraryDownloads", isDirectory: true)
+                    try? FileManager.default.createDirectory(
+                        at: destDir, withIntermediateDirectories: true)
+
+                    let dest = destDir.appendingPathComponent(filename)
+                    try? FileManager.default.removeItem(at: dest)
+
+                    do {
+                        try FileManager.default.moveItem(at: tempURL, to: dest)
+                        let title = (filename as NSString).deletingPathExtension
+                        self.logger.info("URLSession download complete: \(filename, privacy: .public)")
+
+                        DispatchQueue.main.async {
+                            self.parent.onDownloadComplete(dest, title)
+                        }
+                    } catch {
+                        self.logger.error("failed to move download: \(error.localizedDescription, privacy: .public)")
+                    }
+                }
+                task.resume()
+            }
+        }
+
+        // Use the struct's JS constant from the coordinator
+    }
+}
+
+// Allow Coordinator to reference the struct's static property
+private extension ZLibraryBrowserView.Coordinator {
+}

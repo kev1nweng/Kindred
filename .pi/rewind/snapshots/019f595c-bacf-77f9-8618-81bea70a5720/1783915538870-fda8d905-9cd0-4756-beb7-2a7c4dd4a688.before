@@ -1,0 +1,224 @@
+import SwiftUI
+import WebKit
+import os
+
+/// Full-screen ZLibrary browser using WKWebView.
+///
+/// Everything happens inside WebKit: login, search, browsing, downloading.
+/// Cloudflare's JavaScript challenge is handled natively by the browser engine.
+/// File downloads are intercepted via `WKDownloadDelegate` and imported
+/// directly into the Kindred library.
+struct ZLibraryBrowserView: UIViewRepresentable {
+    let startURL: URL
+    let onDownloadComplete: (URL, String) -> Void
+    var onLoadingStateChanged: (Bool) -> Void = { _ in }
+
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.websiteDataStore = WKWebsiteDataStore.default()
+
+        // JavaScript to intercept download button clicks
+        let script = WKUserScript(
+            source: ZLibraryBrowserView.downloadInterceptorJS,
+            injectionTime: .atDocumentEnd,
+            forMainFrameOnly: false
+        )
+        config.userContentController.addUserScript(script)
+        config.userContentController.add(context.coordinator, name: "downloadTriggered")
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = context.coordinator
+        webView.customUserAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+        webView.allowsBackForwardNavigationGestures = true
+        context.coordinator.webView = webView
+        webView.load(URLRequest(url: startURL))
+        return webView
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    // JavaScript injected on every page load to intercept download clicks.
+    static let downloadInterceptorJS = """
+    (function() {
+        function sendDownloadURL(url, filename) {
+            if (url && url.length > 0) {
+                window.webkit.messageHandlers.downloadTriggered.postMessage({
+                    url: url, filename: filename || ''
+                });
+            }
+        }
+        document.addEventListener('click', function(e) {
+            var el = e.target;
+            while (el && el !== document.body) {
+                if (el.tagName === 'A' && el.href) {
+                    var href = el.href;
+                    var cls = el.className || '';
+                    if (href.indexOf('/dl/') !== -1 ||
+                        cls.indexOf('addDownloadedBook') !== -1 ||
+                        cls.indexOf('downloadLink') !== -1 ||
+                        el.getAttribute('data-action') === 'download') {
+                        sendDownloadURL(href, el.getAttribute('download') || '');
+                    }
+                }
+                el = el.parentElement;
+            }
+        }, true);
+        var origOpen = window.open;
+        window.open = function(url) {
+            if (url && url.indexOf('/dl/') !== -1) {
+                sendDownloadURL(url, '');
+                return null;
+            }
+            return origOpen.apply(window, arguments);
+        };
+    })();
+    """
+
+    // MARK: - Coordinator
+
+    final class Coordinator: NSObject, WKNavigationDelegate, WKDownloadDelegate, WKScriptMessageHandler {
+        let parent: ZLibraryBrowserView
+        weak var webView: WKWebView?
+        private let logger = Logger(
+            subsystem: "space.kev1nweng.kindred",
+            category: "ZLibraryBrowser"
+        )
+
+        init(parent: ZLibraryBrowserView) {
+            self.parent = parent
+        }
+
+        // MARK: - Script message handler
+
+        func userContentController(_ userContentController: WKUserContentController,
+                                   didReceive message: WKScriptMessage) {
+            if message.name == "downloadTriggered",
+               let body = message.body as? [String: String],
+               let urlString = body["url"] {
+                logger.info("JS download triggered: \(urlString, privacy: .public)")
+                // Load the download URL in the main WebView.
+                // decidePolicyFor navigationResponse will detect the file
+                // response and return .download, triggering WKDownload.
+                if let url = URL(string: urlString) {
+                    webView?.load(URLRequest(url: url))
+                }
+            }
+        }
+
+        // MARK: - Navigation
+
+        func webView(_ webView: WKWebView,
+                     didStartProvisionalNavigation navigation: WKNavigation!) {
+            DispatchQueue.main.async { self.parent.onLoadingStateChanged(true) }
+        }
+
+        func webView(_ webView: WKWebView,
+                     didFinish navigation: WKNavigation!) {
+            let url = webView.url?.absoluteString ?? "nil"
+            logger.info("didFinish: \(url, privacy: .public)")
+
+            // Re-inject the download interceptor on every page load
+            webView.evaluateJavaScript(ZLibraryBrowserView.downloadInterceptorJS)
+
+            DispatchQueue.main.async { self.parent.onLoadingStateChanged(false) }
+        }
+
+        func webView(_ webView: WKWebView,
+                     didFailProvisionalNavigation navigation: WKNavigation!,
+                     withError error: Error) {
+            DispatchQueue.main.async { self.parent.onLoadingStateChanged(false) }
+        }
+
+        func webView(_ webView: WKWebView,
+                     didFail navigation: WKNavigation!,
+                     withError error: Error) {
+            DispatchQueue.main.async { self.parent.onLoadingStateChanged(false) }
+        }
+
+        // Detect download responses and convert them to WKDownloads
+        func webView(_ webView: WKWebView,
+                     decidePolicyFor navigationResponse: WKNavigationResponse,
+                     decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
+            let response = navigationResponse.response
+            let url = response.url?.absoluteString ?? ""
+            let mimeType = response.mimeType ?? ""
+            let contentDisposition = (response as? HTTPURLResponse)?
+                .value(forHTTPHeaderField: "Content-Disposition") ?? ""
+
+            let isDownloadURL = url.contains("/dl/")
+            let hasAttachment = contentDisposition.lowercased().contains("attachment")
+            let isFileResponse = !mimeType.isEmpty &&
+                !mimeType.contains("text/html") &&
+                !mimeType.contains("text/css") &&
+                !mimeType.contains("javascript") &&
+                !mimeType.contains("image/") &&
+                !mimeType.contains("font")
+
+            if isDownloadURL || hasAttachment || (isFileResponse && navigationResponse.isForMainFrame) {
+                logger.info("download response: url=\(url, privacy: .public) mime=\(mimeType, privacy: .public)")
+                decisionHandler(.download)
+            } else {
+                decisionHandler(.allow)
+            }
+        }
+
+        // Called when a navigation becomes a download
+        func webView(_ webView: WKWebView,
+                     navigationAction: WKNavigationAction,
+                     didBecome download: WKDownload) {
+            download.delegate = self
+            logger.info("navigation became download")
+        }
+
+        // MARK: - WKDownloadDelegate
+
+        func download(_ download: WKDownload,
+                      decideDestinationUsing response: URLResponse,
+                      suggestedFilename filename: String,
+                      completionHandler: @escaping (URL?) -> Void) {
+            let tempDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ZLibraryDownloads", isDirectory: true)
+            try? FileManager.default.createDirectory(
+                at: tempDir, withIntermediateDirectories: true)
+
+            let cleanName = filename.isEmpty ? "book" : filename
+            let dest = tempDir.appendingPathComponent(cleanName)
+            try? FileManager.default.removeItem(at: dest)
+
+            logger.info("download destination: \(cleanName, privacy: .public)")
+            completionHandler(dest)
+        }
+
+        func downloadDidFinish(_ download: WKDownload) {
+            logger.info("download finished")
+
+            let tempDir = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ZLibraryDownloads", isDirectory: true)
+
+            guard let files = try? FileManager.default.contentsOfDirectory(
+                at: tempDir, includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            ), let file = files.last else {
+                logger.error("download finished but no file found")
+                return
+            }
+
+            let title = (file.lastPathComponent as NSString).deletingPathExtension
+            logger.info("download file: \(file.lastPathComponent, privacy: .public)")
+
+            DispatchQueue.main.async {
+                self.parent.onDownloadComplete(file, title)
+            }
+        }
+
+        func download(_ download: WKDownload,
+                      didFailWithError error: Error,
+                      resumeData: Data?) {
+            logger.error("download failed: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+}
