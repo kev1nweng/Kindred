@@ -3,3 +3,5 @@ build/
 *.xcuserstate
 xcuserdata/
 .DS_Store
+.pi/
+.rpiv/
