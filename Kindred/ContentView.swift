@@ -35,6 +35,12 @@ struct ContentView: View {
                 library.importPendingShares()
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in
+            // A foreground TCP listener cannot be relied on after suspension.
+            // Stop it explicitly so the UI and the retained listener never
+            // diverge when the app becomes active again.
+            server.stop()
+        }
     }
 }
 

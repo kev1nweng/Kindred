@@ -19,16 +19,20 @@ final class HTTPBookServer: ObservableObject {
 
     func start() {
         guard listener == nil else { return }
+        errorMessage = nil
 
         do {
             let listener = try NWListener(using: .tcp, on: .any)
             listener.service = NWListener.Service(name: "Kindred", type: "_http._tcp")
             listener.stateUpdateHandler = { [weak self, weak listener] state in
                 Task { @MainActor in
-                    guard let self else { return }
+                    guard let self, let listener, self.listener === listener else { return }
                     switch state {
                     case .ready:
-                        guard let port = listener?.port?.rawValue else { return }
+                        guard let port = listener.port?.rawValue else {
+                            self.finish(listener: listener)
+                            return
+                        }
                         self.isRunning = true
                         if let ip = LocalNetworkAddress.wifiIPv4 {
                             self.address = "http://\(ip):\(port)/"
@@ -38,10 +42,12 @@ final class HTTPBookServer: ObservableObject {
                             self.statusMessage = String(localized: "No Wi-Fi IPv4 address was found. Connect both devices to the same Wi-Fi network.")
                         }
                     case .failed(let error):
-                        self.errorMessage = error.localizedDescription
-                        self.stop()
+                        self.finish(listener: listener, error: error)
                     case .cancelled:
-                        self.isRunning = false
+                        // iOS may cancel a listener while the app is suspended.
+                        // Clear the retained listener as well as the UI state so
+                        // a later Start action can create a fresh listener.
+                        self.finish(listener: listener)
                     default:
                         break
                     }
@@ -62,13 +68,40 @@ final class HTTPBookServer: ObservableObject {
             statusMessage = String(localized: "Starting…")
             listener.start(queue: queue)
         } catch {
+            resetPublishedState()
             errorMessage = error.localizedDescription
         }
     }
 
     func stop() {
-        listener?.cancel()
+        guard let listener else {
+            resetPublishedState()
+            return
+        }
+
+        // Detach first. A delayed .cancelled callback from this listener must
+        // not be allowed to reset the state of a newly-started listener.
+        self.listener = nil
+        listener.stateUpdateHandler = nil
+        listener.newConnectionHandler = nil
+        listener.cancel()
+        resetPublishedState()
+    }
+
+    private func finish(listener finishedListener: NWListener, error: NWError? = nil) {
+        guard listener === finishedListener else { return }
+
         listener = nil
+        finishedListener.stateUpdateHandler = nil
+        finishedListener.newConnectionHandler = nil
+        finishedListener.cancel()
+        if let error {
+            errorMessage = error.localizedDescription
+        }
+        resetPublishedState()
+    }
+
+    private func resetPublishedState() {
         isRunning = false
         address = nil
         statusMessage = nil
@@ -78,6 +111,23 @@ final class HTTPBookServer: ObservableObject {
 private struct ServedBook: Sendable {
     let book: Book
     let fileURL: URL
+}
+
+/// Kindle's browser validates the legacy download filename before handing the
+/// response to the reader. In particular, recent firmware rejects non-ASCII
+/// names, and some releases do not include `.azw3` in the browser whitelist
+/// even though the reader can open KF8 content.
+enum KindleDownload {
+    static func filename(for book: Book) -> String {
+        "kindred-\(book.id.uuidString.lowercased()).\(downloadExtension(for: book.format))"
+    }
+
+    static func downloadExtension(for format: String) -> String {
+        switch format.uppercased() {
+        case "AZW3": "azw"
+        default: format.lowercased()
+        }
+    }
 }
 
 private final class HTTPConnection: @unchecked Sendable {
@@ -128,8 +178,7 @@ private final class HTTPConnection: @unchecked Sendable {
         }
 
         if path.hasPrefix("/books/"),
-           let id = UUID(uuidString: String(path.dropFirst("/books/".count))),
-           let item = books.first(where: { $0.book.id == id }) {
+           let item = extractBookItem(from: path) {
             sendFile(item, headOnly: isHead)
             return
         }
@@ -146,10 +195,11 @@ private final class HTTPConnection: @unchecked Sendable {
         }
         let rows = visibleBooks.map { item in
             let title = escapeHTML(item.book.title)
-            let filename = escapeHTML(item.book.originalFilename)
             let details = escapeHTML("\(item.book.format) · \(item.book.formattedSize)")
+            let downloadFilename = KindleDownload.filename(for: item.book)
+            let bookPath = "\(item.book.id.uuidString)/\(downloadFilename)"
             return """
-            <tr><td><a href="/books/\(item.book.id.uuidString)">\(title)</a><br><small>\(details)</small></td><td><a href="/books/\(item.book.id.uuidString)" download="\(filename)">\(escapeHTML(String(localized: "Download")))</a></td></tr>
+            <tr><td><a href="/books/\(bookPath)">\(title)</a><br><small>\(details)</small></td><td><a href="/books/\(bookPath)" download="\(downloadFilename)">\(escapeHTML(String(localized: "Download")))</a></td></tr>
             """
         }.joined(separator: "\n")
 
@@ -170,6 +220,18 @@ private final class HTTPConnection: @unchecked Sendable {
         """
     }
 
+    private func extractBookItem(from path: String) -> ServedBook? {
+        let raw = String(path.dropFirst("/books/".count))
+        // Accept:
+        //   /books/{UUID}
+        //   /books/{UUID}.{ext}
+        //   /books/{UUID}/{filename}
+        let firstPart = raw.split(separator: "/", maxSplits: 1).first.map(String.init) ?? raw
+        let idPart = firstPart.split(separator: ".", maxSplits: 1).first.map(String.init) ?? firstPart
+        guard let id = UUID(uuidString: idPart) else { return nil }
+        return books.first { $0.book.id == id }
+    }
+
     private func sendHTML(_ html: String, headOnly: Bool) {
         let body = Data(html.utf8)
         let header = responseHeader(
@@ -188,11 +250,11 @@ private final class HTTPConnection: @unchecked Sendable {
             return sendError(status: "404 Not Found", message: String(localized: "File is unavailable"))
         }
 
-        let dispositionName = item.book.originalFilename
-            .replacingOccurrences(of: "\"", with: "")
-            .replacingOccurrences(of: "\r", with: "")
-            .replacingOccurrences(of: "\n", with: "")
-        let extra = "Content-Disposition: attachment; filename=\"\(dispositionName)\"\r\n"
+        // Keep both the URL and legacy filename= value short and ASCII-only.
+        // Kindle ignores RFC 5987 filename*= on affected firmware and may then
+        // mis-detect a valid MOBI/AZW response as an unsupported file type.
+        let downloadFilename = KindleDownload.filename(for: item.book)
+        let extra = "Content-Disposition: attachment; filename=\"\(downloadFilename)\"\r\n"
             + "Cache-Control: no-cache\r\n"
         let header = responseHeader(
             status: "200 OK",
@@ -284,7 +346,10 @@ private final class HTTPConnection: @unchecked Sendable {
         switch format {
         case "PDF": "application/pdf"
         case "TXT": "text/plain; charset=utf-8"
-        case "MOBI": "application/x-mobipocket-ebook"
+        case "EPUB": "application/epub+zip"
+        // Kindle's Experimental Browser is picky about MIME types for MOBI/AZW files.
+        // Returning the generic octet-stream lets it decide from the short,
+        // browser-compatible extension supplied by KindleDownload.
         default: "application/octet-stream"
         }
     }
